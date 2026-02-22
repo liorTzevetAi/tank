@@ -1,37 +1,48 @@
 # TANK — PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-20
+**Generated:** 2026-02-23
 **Commit:** 9f47139
 **Branch:** main
 
 ## OVERVIEW
 
-Security-first package manager for AI agent skills. Monorepo: CLI (`tank` command) + Next.js 15 web registry + shared schemas package. TypeScript-first with a Python security analysis pipeline (6-stage scanning).
+Security-first package manager for AI agent skills. Monorepo: CLI (`tank` command) + Next.js 15 web registry + shared schemas package. TypeScript-first with a Python security analysis pipeline (6-stage scanning). Inspired by the ClawHavoc incident (341 malicious skills, 12% of a major marketplace) — Tank enforces versioning, lockfiles, permissions, code signing, and static analysis from day one.
+
+**Core Value Proposition:** Prevent credential exfiltration, prompt injection, and supply chain attacks in AI agent skills through mandatory security scanning and runtime permission enforcement.
 
 ## STRUCTURE
 
 ```
 tank/
 ├── apps/
-│   ├── cli/          # `tank` CLI — Commander.js, 16 commands
-│   └── web/          # Next.js 15 registry + API + Python serverless stubs
+│   ├── cli/              # `tank` CLI — Commander.js, 16 commands
+│   │   ├── bin/tank.ts   # Entry point, registers all commands
+│   │   └── src/
+│   │       ├── commands/ # 1-file-per-command pattern
+│   │       └── lib/      # API client, config, lockfile, packer, linker
+│   └── web/              # Next.js 15 registry + API + Python serverless stubs
+│       ├── app/          # App Router: (auth), (dashboard), (registry), api/
+│       ├── lib/          # DB, auth, storage, email, audit-score
+│       └── api-python/   # Mirrors python-api/ for Vercel serverless
 ├── packages/
-│   └── shared/       # @tank/shared — Zod schemas, types, constants, resolver
-├── python-api/       # Standalone security scanner — FastAPI, 6-stage pipeline
-├── e2e/              # End-to-end tests (sequential, real CLI spawning)
-├── docs/             # Product brief, architecture, roadmap
-├── infra/            # Loki + Grafana configs
-├── supabase/         # Supabase local dev config
-├── scripts/          # One-off utilities (backfill-readme.mjs)
-└── test-skill/       # Fixture skill for E2E testing
+│   └── shared/           # @tank/shared — Zod schemas, types, constants, resolver
+├── python-api/           # Standalone security scanner — FastAPI, 6-stage pipeline
+│   ├── api/analyze/      # REST endpoints: scan, rescan, security, permissions
+│   └── lib/scan/         # stage0–stage5, models, verdict, dedup, sarif
+├── e2e/                  # End-to-end tests (sequential, real CLI spawning)
+├── docs/                 # Product brief, architecture, roadmap, performance testing
+├── infra/                # Loki + Grafana configs for observability
+├── supabase/             # Supabase local dev config (storage only, not DB)
+├── scripts/              # One-off utilities (backfill-readme.mjs, onprem/)
+└── test-skill/           # Fixture skill for E2E testing
 ```
 
 ## WHERE TO LOOK
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Add CLI command | `apps/cli/src/commands/` | Register in `bin/tank.ts`, 1-file-per-command |
-| Add API endpoint | `apps/web/app/api/v1/` | Next.js Route Handler pattern |
+| Add CLI command | `apps/cli/src/commands/` | Export async fn, register in `bin/tank.ts` |
+| Add API endpoint | `apps/web/app/api/v1/` or `api/admin/` | Next.js Route Handler pattern |
 | Add UI page | `apps/web/app/` | Route groups: `(auth)`, `(dashboard)`, `(registry)` |
 | Add server action | `apps/web/app/(dashboard)/*/actions.ts` | Existing: tokens, orgs |
 | Modify DB schema | `apps/web/lib/db/schema.ts` | Run `drizzle-kit generate` after |
@@ -39,11 +50,16 @@ tank/
 | Add shared type/schema | `packages/shared/src/` | Export from `index.ts` barrel |
 | Add UI component | `apps/web/components/ui/` | `npx shadcn add <component>` |
 | Modify permissions model | `packages/shared/src/schemas/permissions.ts` | Zod schema |
-| Auth configuration | `apps/web/lib/auth.ts` | better-auth with GitHub OAuth |
+| Auth configuration | `apps/web/lib/auth.ts` | better-auth with GitHub OAuth + OIDC SSO |
 | Modify security scanner | `python-api/lib/scan/` | 6 stages: stage0–stage5 |
 | Environment variables | `.env.local` (root) | Copy from `.env.example` |
 | Performance testing | `apps/web/scripts/perf-*` | Seed → analyze → report |
 | E2E tests | `e2e/` | Needs `.env.local` with real credentials |
+| Email service | `apps/web/lib/email/` | Rate-limited email via Resend |
+| Storage abstraction | `apps/web/lib/storage/provider.ts` | On-prem or Supabase backends |
+| OIDC SSO config | `apps/web/lib/auth.ts` | Enterprise SSO via OIDC |
+| Admin middleware | `apps/web/lib/admin-middleware.ts` | Role-based access control |
+| Audit logging | `apps/web/app/api/admin/audit-logs/` | Admin action logging |
 
 ## DEPENDENCY GRAPH
 
@@ -62,35 +78,61 @@ No circular dependencies. CLI and Web are independent consumers of shared.
 
 ## CONVENTIONS
 
+### TypeScript/JavaScript
 - **Strict TypeScript** — `strict: true` everywhere, no `as any`, no `@ts-ignore`
 - **ESM only** — `"type": "module"` in all packages, no `require()`
 - **2-space indent, LF line endings** — enforced via `.editorconfig`
-- **pnpm 10.29.3** — enforced via `packageManager` field (run `corepack enable`)
+- **pnpm 10.29.3** — enforced via `packageManager` field (run `corecore enable`)
 - **Turbo** orchestrates `build`, `test`, `lint`, `dev` across workspaces
 - **TDD** — RED → GREEN → REFACTOR (per CONTRIBUTING.md)
 - **Conventional Commits** — `feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`
-- **Server Components by default** — `'use client'` only when needed
-- **Zod for all validation** — never trust raw input
-- **Drizzle ORM** — never raw SQL or Prisma
-- **No ESLint/Prettier** — relies on TypeScript strict mode + `.editorconfig`
 - **Import alias** — Web app uses `@/*` (tsconfig paths), CLI uses relative `.js` extensions
 - **Test files** — `__tests__/*.test.ts` colocated with source (never `.spec.ts`)
 - **Vitest** for TypeScript, **pytest** for Python
+- **No ESLint/Prettier** — relies on TypeScript strict mode + `.editorconfig`
+
+### Web App
+- **Server Components by default** — `'use client'` only when needed
 - **Tailwind CSS v4** via `@tailwindcss/postcss`
+- **Zod for all validation** — never trust raw input
+- **Drizzle ORM** — never raw SQL or Prisma
+
+### Python
+- **Pydantic 2** for all models — strict validation
+- **pytest** for testing — `test_*.py` pattern
 
 ## ANTI-PATTERNS
 
+### Universal
 - **Never suppress types** — no `as any`, `@ts-ignore`, `@ts-expect-error`
 - **Never use `.spec.ts`** — always `.test.ts`
 - **Never import between apps** — CLI and Web must not import from each other, use `@tank/shared`
 - **Never commit `.env.local`** — contains real credentials
 - **Never use `require()`** — ESM only
+- **Never refactor while bugfixing** — fix minimally
+
+### Web App
 - **Never create DB connections outside `apps/web/lib/db.ts`** — globalThis hot-reload singleton
 - **Never use Supabase for DB queries** — Supabase is storage-only, use Drizzle ORM
 - **Never expose `supabaseAdmin` to browser** — service-role key is server-only
 - **Never put auth checks in page components** — use layout-level guards
 - **Never use raw SQL or Prisma** — Drizzle ORM only
-- **Never refactor while bugfixing** — fix minimally
+- **Never modify `auth-schema.ts` manually** — auto-generated by better-auth
+
+### CLI
+- **Never hardcode registry URL** — use `REGISTRY_URL` from `@tank/shared`
+- **Never skip SHA-512 verification** during install
+- **Never extract without security filters** — reject symlinks, hardlinks, path traversal, absolute paths
+- **Never exceed** 1000 files or 50MB per tarball (enforced in packer)
+
+### Python API
+- **Never modify without syncing to `apps/web/api-python/`** — both locations must match
+- **Never skip stage0 (ingest)** — all other stages depend on its output
+- **Never swallow stage errors silently** — use `errored` status, not empty results
+
+### Shared Package
+- **Never add side-effect dependencies** — this package must stay pure
+- **Never mutate exported constants** — treat as frozen
 
 ## COMMANDS
 
@@ -114,18 +156,36 @@ pnpm test --filter=shared         # Shared package tests only
 # Database
 pnpm --filter=web drizzle-kit generate  # Generate migration
 pnpm --filter=web drizzle-kit push      # Push schema to DB
+
+# Admin
+pnpm --filter=web admin:bootstrap       # Promote FIRST_ADMIN_EMAIL to admin role
 ```
 
 ## NOTES
 
+### Runtime Requirements
 - **Node.js 24+** and **Python 3.14+** required
 - **Supabase** is for file storage (tarballs) only — Drizzle + `postgres` connects directly to PostgreSQL
+
+### Architecture Decisions
 - **python-api/** and **apps/web/api-python/** are mirrors — changes must be synced between both
 - **CLI auth flow**: browser OAuth → poll → API key stored in `~/.tank/config.json`
-- **Web auth**: better-auth with GitHub OAuth + `apiKey` plugin (prefix `tank_`) + `organization` plugin
+- **Web auth**: better-auth with GitHub OAuth + `apiKey` plugin (prefix `tank_`) + `organization` plugin + OIDC SSO
 - **DB schema split**: `schema.ts` (domain tables) + `auth-schema.ts` (better-auth auto-generated)
-- **E2E tests run sequentially** — producer must finish before consumer
 - **Two logging tiers**: user-facing (`chalk`) and debug (`pino` → Loki). Enable debug: `TANK_DEBUG=1`
 - **Web imports `@tank/shared` undeclared** in its `package.json` — works via pnpm workspace hoisting
+
+### Testing
+- **E2E tests run sequentially** — producer must finish before consumer
 - **CI pipeline**: 2 jobs — test (fake creds) then performance (real Postgres 17 + Supabase local)
-- **Security scanner verdict**: 1+ critical → FAIL, 4+ high → FAIL, 1-3 high → FLAGGED, medium/low → PASS_WITH_NOTES
+
+### Security Scanner
+- **Verdict rules**: 1+ critical → FAIL, 4+ high → FAIL, 1-3 high → FLAGGED, medium/low → PASS_WITH_NOTES
+- **6 stages**: ingest (hash) → structure → static (AST) → injection → secrets → supply chain
+
+### Recent Features (2026-02)
+- **OIDC SSO**: Enterprise single sign-on via OpenID Connect
+- **On-prem storage**: Abstracted storage provider for self-hosted deployments
+- **Email service**: Rate-limited notifications via Resend
+- **Service accounts**: API keys for CI/CD automation
+- **Audit logging**: Admin action tracking for compliance
