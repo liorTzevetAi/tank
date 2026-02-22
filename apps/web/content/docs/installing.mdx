@@ -1,0 +1,304 @@
+---
+title: Installing Skills
+description: Learn how to install and manage skills from the Tank registry
+---
+
+# Installing Skills
+
+This guide covers installing, updating, and managing skills from the Tank registry.
+
+## Installation Basics
+
+### Install a Skill
+
+```bash
+# Install latest version
+tank install @org/skill-name
+
+# Install specific version
+tank install @org/skill-name@1.2.0
+
+# Install with version range
+tank install @org/skill-name@^1.0.0
+```
+
+### Installation Process
+
+When you run `tank install`:
+
+1. **Resolve Version** - Finds best match for semver range
+2. **Fetch Tarball** - Downloads from registry
+3. **Verify Hash** - SHA-512 validation against registry signature
+4. **Security Scan** - Runs local checks (optional)
+5. **Extract Files** - With security filters (no symlinks, path traversal)
+6. **Update Lockfile** - Records installed version
+
+### Installation Location
+
+Skills are installed to:
+
+```
+~/.tank/skills/
+└── @org/
+    └── skill-name@1.0.0/
+        ├── skills.json
+        ├── index.ts
+        └── ...
+```
+
+## The Lockfile
+
+`skills.lock` records exact installed versions:
+
+```json
+{
+  "version": 1,
+  "skills": {
+    "@org/skill-name": {
+      "version": "1.2.3",
+      "resolved": "https://tankpkg.com/tarballs/@org/skill-name@1.2.3.tgz",
+      "integrity": "sha512-abc123...",
+      "permissions": {
+        "network": { "outbound": ["api.openai.com"] }
+      }
+    }
+  }
+}
+```
+
+### Why Lockfiles Matter
+
+- **Reproducibility** - Same versions every time
+- **Integrity** - SHA-512 verification
+- **Audit Trail** - Know exactly what's installed
+
+## Version Management
+
+### Semantic Versioning
+
+Tank follows semver for version resolution:
+
+| Range | Matches |
+|-------|---------|
+| `^1.2.3` | &gt;=1.2.3 &lt;2.0.0 |
+| `~1.2.3` | &gt;=1.2.3 &lt;1.3.0 |
+| `1.2.x` | 1.2.0, 1.2.1, etc. |
+| `&gt;=1.0.0` | Any version &gt;= 1.0.0 |
+| `1.0.0 - 2.0.0` | &gt;=1.0.0 &lt;=2.0.0 |
+
+### Update Skills
+
+```bash
+# Update all skills within their ranges
+tank update
+
+# Update specific skill
+tank update @org/skill-name
+
+# Update to latest (ignoring range)
+tank update @org/skill-name@latest
+```
+
+### Remove Skills
+
+```bash
+# Remove a skill
+tank remove @org/skill-name
+
+# Remove and clean cache
+tank remove @org/skill-name --clean
+```
+
+## Skill Linking
+
+Link skills to your agent's workspace:
+
+```bash
+# Link a skill to current directory
+tank link @org/skill-name
+
+# Link to specific agent
+tank link @org/skill-name --agent ./my-agent
+
+# Unlink
+tank unlink @org/skill-name
+```
+
+This creates symlinks:
+
+```
+./my-agent/.skills/
+└── @org/
+    └── skill-name -> ~/.tank/skills/@org/skill-name@1.0.0
+```
+
+## Verification
+
+### Verify Lockfile
+
+```bash
+# Verify all installed skills match lockfile
+tank verify
+```
+
+This checks:
+
+1. All skills exist in lockfile
+2. Files match recorded hashes
+3. No unauthorized modifications
+
+### Audit Security
+
+```bash
+# Check security status of installed skills
+tank audit
+
+# Audit specific skill
+tank audit @org/skill-name
+```
+
+## Permissions
+
+### View Permissions
+
+```bash
+# Show all installed permissions
+tank permissions
+
+# Show for specific skill
+tank permissions @org/skill-name
+```
+
+### Permission Summary
+
+```bash
+tank permissions --summary
+```
+
+Output:
+
+```
+Network Access:
+  api.openai.com        @org/skill-name
+  api.anthropic.com     @org/skill-name
+
+Filesystem Read:
+  ./data/**             @org/skill-name
+
+Filesystem Write:
+  ./output/**           @org/skill-name
+
+Environment Variables:
+  OPENAI_API_KEY        @org/skill-name
+```
+
+## Search
+
+### Search Registry
+
+```bash
+# Search by name
+tank search "openai"
+
+# Search by keyword
+tank search --keyword "automation"
+
+# Search in description
+tank search --description "gpt"
+```
+
+### Skill Info
+
+```bash
+# Get detailed info
+tank info @org/skill-name
+
+# Show all versions
+tank info @org/skill-name --versions
+```
+
+## Dependencies
+
+Skills can depend on other skills:
+
+```json
+{
+  "dependencies": {
+    "@org/utils": "^1.0.0",
+    "@org/logger": "^2.0.0"
+  }
+}
+```
+
+Install with dependencies:
+
+```bash
+# Installs skill and all dependencies
+tank install @org/skill-name
+```
+
+## Caching
+
+Tank caches tarballs to speed up reinstallations:
+
+```
+~/.tank/cache/
+└── tarballs/
+    └── @org/
+        └── skill-name@1.0.0.tgz
+```
+
+### Clear Cache
+
+```bash
+# Clear all cache
+tank cache clear
+
+# Clear specific skill
+tank cache clear @org/skill-name
+```
+
+## Troubleshooting
+
+### Hash Mismatch
+
+```
+Error: SHA-512 verification failed
+Expected: abc123...
+Actual:   def456...
+```
+
+**Solution**: The tarball was corrupted or tampered. Clear cache and retry:
+
+```bash
+tank cache clear @org/skill-name
+tank install @org/skill-name
+```
+
+### Permission Denied
+
+```
+Error: Skill requests network access to api.malicious.com
+```
+
+**Solution**: Review the skill's permissions. If you trust it, proceed with explicit consent.
+
+### Version Not Found
+
+```
+Error: No version found matching ^2.0.0
+```
+
+**Solution**: Check available versions:
+
+```bash
+tank info @org/skill-name --versions
+```
+
+## Best Practices
+
+1. **Use Lockfiles** - Always commit `skills.lock`
+2. **Pin Versions** - Use exact versions for production
+3. **Audit Regularly** - Run `tank audit` periodically
+4. **Review Permissions** - Understand what skills can access
+5. **Update Carefully** - Test updates before deploying
