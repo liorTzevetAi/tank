@@ -1,0 +1,83 @@
+---
+title: Welcome to Tank
+description: Security-first package manager for AI agent skills
+---
+
+# Welcome to Tank
+
+Tank is a security-first package manager for AI agent skills. It prevents credential exfiltration, prompt injection, and supply chain attacks through mandatory security scanning and runtime permission enforcement.
+
+## Why Tank?
+
+The AI agent ecosystem faces critical security challenges:
+
+- **Credential Exfiltration**: Malicious skills stealing API keys and secrets
+- **Prompt Injection**: Skills that manipulate agent behavior
+- **Supply Chain Attacks**: Compromised dependencies affecting thousands of users
+
+Tank addresses these through:
+
+### Security-First Design
+
+Every skill goes through a **6-stage security analysis pipeline** before publication:
+
+1. **Ingest** - Hash verification and tarball validation
+2. **Structure** - File structure analysis and anomaly detection
+3. **Static Analysis** - AST-based code scanning for dangerous patterns
+4. **Injection Detection** - Prompt injection and manipulation detection
+5. **Secrets Scanning** - Hardcoded credential detection
+6. **Supply Chain** - Dependency vulnerability analysis
+
+### Permission System
+
+Skills declare their capabilities upfront:
+
+```json
+{
+  "permissions": {
+    "network": {
+      "outbound": ["api.openai.com", "api.anthropic.com"]
+    },
+    "filesystem": {
+      "read": ["./data/**"],
+      "write": ["./output/**"]
+    }
+  }
+}
+```
+
+### Cryptographic Verification
+
+Every installed skill is verified via SHA-512 hash against the registry signature.
+
+## Quick Start
+
+### For Skill Consumers
+
+```bash
+# Install a skill
+tank install @org/skill-name
+
+# Verify integrity
+tank verify
+
+# View permissions
+tank permissions
+```
+
+### For Skill Publishers
+
+```bash
+# Initialize a new skill
+tank init
+
+# Publish to registry
+tank publish
+```
+
+## Next Steps
+
+- [Getting Started](/docs/getting-started) - Set up your environment
+- [Publishing Skills](/docs/publishing) - Learn how to publish
+- [Installing Skills](/docs/installing) - Install and manage skills
+- [Self-Hosting](/docs/self-hosting) - Host your own registry

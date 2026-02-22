@@ -1,0 +1,133 @@
+---
+title: Getting Started
+description: Set up your environment and start using Tank
+---
+
+# Getting Started
+
+This guide will help you set up Tank and start managing AI agent skills securely.
+
+## Prerequisites
+
+- **Node.js 24+** - Required for the CLI
+- **Python 3.14+** - Required for security scanning
+- **pnpm 10.29.3+** - Package manager (or npm/yarn)
+
+## Install the CLI
+
+```bash
+# Using pnpm (recommended)
+pnpm install -g @tank/cli
+
+# Using npm
+npm install -g @tank/cli
+
+# Using yarn
+yarn global add @tank/cli
+```
+
+Verify the installation:
+
+```bash
+tank --version
+```
+
+## Authenticate
+
+Tank uses GitHub OAuth for authentication. Run:
+
+```bash
+tank login
+```
+
+This will:
+
+1. Open your browser to GitHub OAuth
+2. Ask you to authorize Tank
+3. Store your API key in `~/.tank/config.json`
+
+## Configuration
+
+Tank stores configuration in `~/.tank/config.json`:
+
+```json
+{
+  "apiKey": "tank_xxx...",
+  "registry": "https://tankpkg.com",
+  "defaultOrg": "my-org"
+}
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TANK_REGISTRY` | Registry URL | `https://tankpkg.com` |
+| `TANK_CONFIG_DIR` | Config directory | `~/.tank` |
+| `TANK_DEBUG` | Enable debug logging | `false` |
+
+## Directory Structure
+
+Tank creates the following structure:
+
+```
+~/.tank/
+├── config.json          # Authentication and settings
+├── skills/              # Installed skills
+│   └── @org/
+│       └── skill@1.0.0/
+└── cache/               # Tarball cache
+```
+
+## Create Your First Skill
+
+### 1. Initialize
+
+```bash
+mkdir my-skill
+cd my-skill
+tank init
+```
+
+This creates `skills.json`:
+
+```json
+{
+  "name": "my-skill",
+  "version": "1.0.0",
+  "description": "My first Tank skill",
+  "permissions": {
+    "network": {
+      "outbound": []
+    },
+    "filesystem": {
+      "read": ["./**"],
+      "write": []
+    }
+  }
+}
+```
+
+### 2. Add Your Code
+
+Create your skill's entry point:
+
+```typescript
+// index.ts
+export async function run(context: SkillContext) {
+  // Your skill logic here
+  return { success: true };
+}
+```
+
+### 3. Publish
+
+```bash
+tank publish
+```
+
+## Next Steps
+
+- [Publishing Skills](/docs/publishing) - Detailed publishing guide
+- [Installing Skills](/docs/installing) - Install and manage skills
+- [CLI Reference](/docs/cli) - Complete command reference
