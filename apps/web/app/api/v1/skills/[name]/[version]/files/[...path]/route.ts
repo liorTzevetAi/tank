@@ -38,11 +38,11 @@ export async function GET(
       return NextResponse.json({ error: 'Skill or version not found' }, { status: 404 });
     }
 
-    const { tarballPath, visibility, publisherId, orgId } = skillVersionRows[0];
+    const { skillId, tarballPath, visibility, publisherId, orgId } = skillVersionRows[0];
     const normalizedVisibility = visibility === 'private' ? 'private' : 'public';
 
     const allowed = await canReadSkill(
-      { visibility: normalizedVisibility, publisherId, orgId },
+      { skillId, visibility: normalizedVisibility, publisherId, orgId },
       requesterUserId,
     );
 

@@ -43,6 +43,13 @@
       "when": 1771790955715,
       "tag": "0005_tan_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771792154164,
+      "tag": "0006_sad_mister_fear",
+      "breakpoints": true
     }
   ]
 }

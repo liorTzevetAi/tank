@@ -1,7 +1,7 @@
 import { auth } from './auth';
 import { db } from './db';
-import { userStatus, member } from './db/schema';
-import { and, desc, eq } from 'drizzle-orm';
+import { userStatus, member, skillAccess } from './db/schema';
+import { and, desc, eq, sql } from 'drizzle-orm';
 
 export interface VerifiedApiKey {
   userId: string;
@@ -63,6 +63,7 @@ export async function verifyCliAuth(request: Request): Promise<VerifiedApiKey | 
 }
 
 export interface SkillAccessSubject {
+  skillId: string;
   visibility: 'public' | 'private';
   publisherId: string;
   orgId: string | null;
@@ -99,7 +100,26 @@ export async function canReadSkill(
   }
 
   if (!skill.orgId) {
-    return false;
+    const directGrant = await db
+      .select({ id: skillAccess.id })
+      .from(skillAccess)
+      .where(and(eq(skillAccess.skillId, skill.skillId), eq(skillAccess.grantedUserId, userId)))
+      .limit(1);
+
+    if (directGrant.length > 0) {
+      return true;
+    }
+
+    const orgGrant = await db.execute(sql`
+      SELECT sa.id
+      FROM skill_access sa
+      INNER JOIN "member" m ON m.organization_id = sa.granted_org_id
+      WHERE sa.skill_id = ${skill.skillId}
+        AND m.user_id = ${userId}
+      LIMIT 1
+    `);
+
+    return orgGrant.length > 0;
   }
 
   const membership = await db
@@ -108,5 +128,28 @@ export async function canReadSkill(
     .where(and(eq(member.organizationId, skill.orgId), eq(member.userId, userId)))
     .limit(1);
 
-  return membership.length > 0;
+  if (membership.length > 0) {
+    return true;
+  }
+
+  const directGrant = await db
+    .select({ id: skillAccess.id })
+    .from(skillAccess)
+    .where(and(eq(skillAccess.skillId, skill.skillId), eq(skillAccess.grantedUserId, userId)))
+    .limit(1);
+
+  if (directGrant.length > 0) {
+    return true;
+  }
+
+  const orgGrant = await db.execute(sql`
+    SELECT sa.id
+    FROM skill_access sa
+    INNER JOIN "member" m ON m.organization_id = sa.granted_org_id
+    WHERE sa.skill_id = ${skill.skillId}
+      AND m.user_id = ${userId}
+    LIMIT 1
+  `);
+
+  return orgGrant.length > 0;
 }
