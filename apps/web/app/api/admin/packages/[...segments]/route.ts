@@ -11,18 +11,19 @@ import {
   scanResults,
   scanFindings,
   userStatus,
+  skillAccess,
 } from '@/lib/db/schema';
-import { user } from '@/lib/db/auth-schema';
+import { user, organization } from '@/lib/db/auth-schema';
 
 // Vercel CDN decodes %2F → / in URL paths, so scoped packages like
 // @tank/skill-creator arrive as multiple path segments. Parse from URL path
 // and split off trailing action keywords (feature, status).
 
-const ACTIONS = new Set(['feature', 'status', 'visibility', 'publisher-ban-delete']);
+const ACTIONS = new Set(['feature', 'status', 'visibility', 'access-grants', 'publisher-ban-delete']);
 
 type ParsedRequest = {
   name: string;
-  action: 'feature' | 'status' | 'visibility' | 'publisher-ban-delete' | 'version' | undefined;
+  action: 'feature' | 'status' | 'visibility' | 'access-grants' | 'publisher-ban-delete' | 'version' | undefined;
   version: string | undefined;
 };
 
@@ -39,7 +40,7 @@ function parseSegments(segments: string[]): ParsedRequest {
   if (segments.length >= 2 && ACTIONS.has(last)) {
     return {
       name: segments.slice(0, -1).join('/'),
-      action: last as 'feature' | 'status' | 'visibility' | 'publisher-ban-delete',
+      action: last as 'feature' | 'status' | 'visibility' | 'access-grants' | 'publisher-ban-delete',
       version: undefined,
     };
   }
@@ -658,10 +659,141 @@ async function handleVisibility(name: string, req: NextRequest, adminUser: Admin
   });
 }
 
+async function handleGetAccessGrants(name: string): Promise<NextResponse> {
+  const [skill] = await db
+    .select({ id: skills.id, name: skills.name })
+    .from(skills)
+    .where(eq(skills.name, name))
+    .limit(1);
+
+  if (!skill) {
+    return NextResponse.json({ error: 'Package not found' }, { status: 404 });
+  }
+
+  const grants = await db
+    .select({
+      id: skillAccess.id,
+      grantedUserId: skillAccess.grantedUserId,
+      grantedOrgId: skillAccess.grantedOrgId,
+      grantedBy: skillAccess.grantedBy,
+      createdAt: skillAccess.createdAt,
+      userName: user.name,
+      userEmail: user.email,
+      orgName: organization.name,
+      orgSlug: organization.slug,
+    })
+    .from(skillAccess)
+    .leftJoin(user, eq(user.id, skillAccess.grantedUserId))
+    .leftJoin(organization, eq(organization.id, skillAccess.grantedOrgId))
+    .where(eq(skillAccess.skillId, skill.id))
+    .orderBy(desc(skillAccess.createdAt));
+
+  return NextResponse.json({
+    packageName: skill.name,
+    grants,
+  });
+}
+
+async function handleSetAccessGrants(
+  name: string,
+  req: NextRequest,
+  adminUser: AdminAuthContext['user'],
+): Promise<NextResponse> {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  if (typeof body !== 'object' || body === null) {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
+
+  const { userIds, orgIds } = body as {
+    userIds?: unknown;
+    orgIds?: unknown;
+  };
+
+  if ((userIds !== undefined && !Array.isArray(userIds)) || (orgIds !== undefined && !Array.isArray(orgIds))) {
+    return NextResponse.json({ error: 'userIds/orgIds must be arrays when provided' }, { status: 400 });
+  }
+
+  const normalizedUserIds = Array.from(new Set((userIds ?? [])
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter((value) => value.length > 0)));
+
+  const normalizedOrgIds = Array.from(new Set((orgIds ?? [])
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter((value) => value.length > 0)));
+
+  const [skill] = await db
+    .select({ id: skills.id, name: skills.name })
+    .from(skills)
+    .where(eq(skills.name, name))
+    .limit(1);
+
+  if (!skill) {
+    return NextResponse.json({ error: 'Package not found' }, { status: 404 });
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(skillAccess)
+      .where(eq(skillAccess.skillId, skill.id));
+
+    if (normalizedUserIds.length > 0) {
+      await tx.insert(skillAccess).values(
+        normalizedUserIds.map((grantedUserId) => ({
+          skillId: skill.id,
+          grantedUserId,
+          grantedBy: adminUser.id,
+        })),
+      );
+    }
+
+    if (normalizedOrgIds.length > 0) {
+      await tx.insert(skillAccess).values(
+        normalizedOrgIds.map((grantedOrgId) => ({
+          skillId: skill.id,
+          grantedOrgId,
+          grantedBy: adminUser.id,
+        })),
+      );
+    }
+
+    await tx.insert(auditEvents).values({
+      action: 'skill.access.update',
+      actorId: adminUser.id,
+      targetType: 'skill',
+      targetId: skill.id,
+      metadata: {
+        userIds: normalizedUserIds,
+        orgIds: normalizedOrgIds,
+      },
+    });
+  });
+
+  return NextResponse.json({
+    success: true,
+    packageName: skill.name,
+    userIds: normalizedUserIds,
+    orgIds: normalizedOrgIds,
+  });
+}
+
 export const GET = withAdminAuth(async (req: NextRequest): Promise<NextResponse> => {
   const { name, action } = parseRequest(req);
 
-  if (!name || action) {
+  if (!name) {
+    return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+  }
+
+  if (action === 'access-grants') {
+    return handleGetAccessGrants(name);
+  }
+
+  if (action) {
     return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
@@ -714,6 +846,16 @@ export const PATCH = withAdminAuth(async (req: NextRequest, { user: adminUser }:
 
   if (name && action === 'visibility') {
     return handleVisibility(name, req, adminUser);
+  }
+
+  return NextResponse.json({ error: 'Not found' }, { status: 404 });
+});
+
+export const PUT = withAdminAuth(async (req: NextRequest, { user: adminUser }: AdminAuthContext): Promise<NextResponse> => {
+  const { name, action } = parseRequest(req);
+
+  if (name && action === 'access-grants') {
+    return handleSetAccessGrants(name, req, adminUser);
   }
 
   return NextResponse.json({ error: 'Not found' }, { status: 404 });

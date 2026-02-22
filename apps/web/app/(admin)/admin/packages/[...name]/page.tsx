@@ -18,6 +18,7 @@ import { ForceDeleteCard } from './components/force-delete-card';
 import { DeleteVersionButton } from './components/delete-version-button';
 import { PublisherBanDeleteButton } from './components/publisher-ban-delete-button';
 import { VisibilityCard } from './components/visibility-card';
+import { AccessGrantsCard } from './components/access-grants-card';
 
 type PackageStatus = 'active' | 'deprecated' | 'quarantined' | 'removed';
 
@@ -257,6 +258,8 @@ export default async function AdminPackageDetailPage({
           <StatusDialog packageName={name} currentStatus={status} />
 
           <VisibilityCard packageName={name} currentVisibility={(skill.visibility === 'private' ? 'private' : 'public')} />
+
+          <AccessGrantsCard packageName={name} />
 
           <ForceDeleteCard packageName={name} />
 
