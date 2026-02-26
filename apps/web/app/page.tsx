@@ -57,6 +57,8 @@ const features = [
   },
 ];
 
+const installCommand = 'curl -fsSL https://raw.githubusercontent.com/tankpkg/tank/main/install.sh | sh';
+
 const cliCommands = [
   { cmd: 'tank install @vercel/next-skill', desc: 'Install with integrity verification' },
   { cmd: 'tank permissions', desc: 'See what your agent can do' },
@@ -144,10 +146,11 @@ export default function Home() {
                 </Button>
               </div>
 
-              {/* Terminal preview hint */}
-              <div className="mt-12">
-                <p className="text-xs text-muted-foreground/60 font-mono">
-                  <span className="text-emerald-400">$</span> tank install @tank/security-audit
+              {/* Install command */}
+              <div className="mt-12 inline-flex items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-2.5">
+                <p className="text-xs sm:text-sm text-muted-foreground font-mono">
+                  <span className="text-emerald-400 select-none">$ </span>
+                  <span className="text-slate-300">{installCommand}</span>
                 </p>
               </div>
             </div>
@@ -288,6 +291,14 @@ export default function Home() {
                 </div>
 
                 <div className="p-4 md:p-6 space-y-4">
+                  <div className="group">
+                    <p className="text-xs text-slate-500 mb-1 font-mono"># Install Tank CLI</p>
+                    <p className="text-sm md:text-base font-mono flex items-center gap-2">
+                      <span className="text-emerald-400 select-none">$</span>
+                      <span className="text-slate-200 group-hover:text-white transition-colors">{installCommand}</span>
+                    </p>
+                  </div>
+                  <div className="border-t border-emerald-500/10" />
                   {cliCommands.map((item) => (
                     <div key={item.cmd} className="group">
                       <p className="text-xs text-slate-500 mb-1 font-mono"># {item.desc}</p>
