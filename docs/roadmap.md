@@ -157,7 +157,6 @@ scaffold                       static analysis
 | Deliverable | Description |
 |-------------|-------------|
 | WASM sandbox (Wasmtime) | Lightweight isolation for skill execution |
-| Capability broker | Proxy layer that enforces declared permissions at runtime |
 | Permission boundary enforcement | Block undeclared network/filesystem/subprocess access |
 | SDK for agent runtimes | Integration interface for Claude Code, Codex, etc. |
 
@@ -167,15 +166,7 @@ scaffold                       static analysis
 |-------------|-------------|
 | Audit logging | Record every action taken by every skill |
 | Rate limiting | Per-skill request/operation limits |
-| Anomaly detection | Flag skills behaving differently from historical patterns |
 | Dashboard | Web UI for monitoring skill activity |
-
-### 3.3 — Firecracker Option
-
-| Deliverable | Description |
-|-------------|-------------|
-| Firecracker micro-VM integration | Higher-isolation option for sensitive environments |
-| Configuration toggle | Allow teams to choose isolation level per skill |
 
 **Exit criteria**: Skills run in sandboxes with enforced permission boundaries. If a skill tries something it didn't declare, it's blocked in real-time.
 
@@ -189,8 +180,8 @@ Not planned in detail yet. Potential directions:
 - **Vulnerability database** — CVE-equivalent for skill vulnerabilities
 - **IDE integration** — VS Code / JetBrains extensions showing audit info inline
 - **Policy-as-code** — enterprise teams defining custom installation policies
-- **Community review program** — structured security review incentives
 - **Governance framework** — dispute resolution, takedown process, namespace policy
+- **`tank diff` command** — show permission and schema diff between versions
 
 ---
 

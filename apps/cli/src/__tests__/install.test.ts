@@ -658,6 +658,131 @@ describe('installCommand', () => {
     expect(linkArgs?.sourceDir).toBe('/mock/agent-skills/test-org--my-skill');
     expect(linkArgs?.sourceDir).not.toBe(expectedExtractDir);
   });
+
+  it('blocks install when audit score is below min_score threshold', async () => {
+    const { installCommand } = await import('../commands/install.js');
+
+    fs.writeFileSync(
+      path.join(tmpDir, 'skills.json'),
+      JSON.stringify({
+        ...validSkillsJson,
+        audit: { min_score: 8.0 },
+      }, null, 2),
+    );
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify(versionsResponse), { status: 200 }),
+    );
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({
+        ...versionMetadata,
+        integrity: fakeTarballIntegrity,
+        auditScore: 7.0,
+      }), { status: 200 }),
+    );
+
+    await expect(
+      installCommand({ name: '@test-org/my-skill', directory: tmpDir, configDir }),
+    ).rejects.toThrow(/audit score 7.*below minimum threshold 8/i);
+  });
+
+  it('allows install when audit score meets min_score threshold', async () => {
+    const { installCommand } = await import('../commands/install.js');
+
+    fs.writeFileSync(
+      path.join(tmpDir, 'skills.json'),
+      JSON.stringify({
+        ...validSkillsJson,
+        audit: { min_score: 7.0 },
+      }, null, 2),
+    );
+
+    setupSuccessfulInstall({
+      versionMeta: {
+        ...versionMetadata,
+        integrity: fakeTarballIntegrity,
+        auditScore: 7.0,
+      },
+    });
+
+    await installCommand({
+      name: '@test-org/my-skill',
+      directory: tmpDir,
+      configDir,
+      homedir: tmpDir,
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    const lockPath = path.join(tmpDir, 'skills.lock');
+    expect(fs.existsSync(lockPath)).toBe(true);
+  });
+
+  it('allows install with warning when audit score is null (not yet scored)', async () => {
+    const { installCommand } = await import('../commands/install.js');
+
+    fs.writeFileSync(
+      path.join(tmpDir, 'skills.json'),
+      JSON.stringify({
+        ...validSkillsJson,
+        audit: { min_score: 7.0 },
+      }, null, 2),
+    );
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify(versionsResponse), { status: 200 }),
+    );
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({
+        ...versionMetadata,
+        integrity: fakeTarballIntegrity,
+        auditScore: null,
+      }), { status: 200 }),
+    );
+    mockFetch.mockResolvedValueOnce(
+      new Response(new Uint8Array(fakeTarball), { status: 200 }),
+    );
+
+    await installCommand({
+      name: '@test-org/my-skill',
+      directory: tmpDir,
+      configDir,
+      homedir: tmpDir,
+    });
+
+    const output = getAllOutput();
+    expect(output).toMatch(/audit score.*not yet available/i);
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('skips audit score check when no audit.min_score is defined', async () => {
+    const { installCommand } = await import('../commands/install.js');
+
+    fs.writeFileSync(
+      path.join(tmpDir, 'skills.json'),
+      JSON.stringify({
+        ...validSkillsJson,
+      }, null, 2),
+    );
+
+    setupSuccessfulInstall({
+      versionMeta: {
+        ...versionMetadata,
+        integrity: fakeTarballIntegrity,
+        auditScore: 2.0,
+      },
+    });
+
+    await installCommand({
+      name: '@test-org/my-skill',
+      directory: tmpDir,
+      configDir,
+      homedir: tmpDir,
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    const lockPath = path.join(tmpDir, 'skills.lock');
+    expect(fs.existsSync(lockPath)).toBe(true);
+  });
 });
 
 describe('installCommand --global', () => {
