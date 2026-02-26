@@ -19,7 +19,8 @@ const mockReturning = vi.fn();
 const mockValues = vi.fn(() => ({ returning: mockReturning }));
 const mockInsert = vi.fn(() => ({ values: mockValues }));
 const mockLimit = vi.fn();
-const mockWhere = vi.fn(() => ({ limit: mockLimit }));
+const mockOrderBy = vi.fn(() => ({ limit: mockLimit }));
+const mockWhere = vi.fn(() => ({ limit: mockLimit, orderBy: mockOrderBy }));
 const mockFrom = vi.fn(() => ({ where: mockWhere }));
 const mockSelect = vi.fn(() => ({ from: mockFrom }));
 const mockSet = vi.fn(() => ({ where: mockUpdateWhere }));
@@ -48,12 +49,14 @@ vi.mock('@/lib/db/schema', () => ({
     permissions: 'skill_versions.permissions',
     auditStatus: 'skill_versions.audit_status',
     publishedBy: 'skill_versions.published_by',
+    createdAt: 'skill_versions.created_at',
   },
 }));
 
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn((col, val) => ({ col, val, type: 'eq' })),
   and: vi.fn((...conditions) => ({ conditions, type: 'and' })),
+  desc: vi.fn((col) => ({ col, type: 'desc' })),
 }));
 
 const mockCreateSignedUploadUrl = vi.fn();
@@ -212,6 +215,7 @@ describe('POST /api/v1/skills', () => {
     mockReturning.mockResolvedValueOnce([{ id: 'skill-1', name: '@testorg/my-skill' }]);
     // Version conflict check returns empty
     mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([]);
     // Version insert
     mockReturning.mockResolvedValueOnce([{ id: 'version-1' }]);
     // Supabase signed URL
@@ -307,6 +311,7 @@ describe('POST /api/v1/skills', () => {
     mockReturning.mockResolvedValueOnce([{ id: 'skill-1', name: '@testorg/my-skill' }]);
     // Version conflict check returns empty
     mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([]);
     // Version insert
     mockReturning.mockResolvedValueOnce([{ id: 'version-1' }]);
     // Supabase signed URL
@@ -349,6 +354,7 @@ describe('POST /api/v1/skills', () => {
     mockReturning.mockResolvedValueOnce([{ id: 'skill-1', name: '@testorg/my-skill' }]);
     // Version conflict check returns empty
     mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([]);
     // Version insert
     mockReturning.mockResolvedValueOnce([{ id: 'version-1' }]);
     // Supabase signed URL
@@ -388,6 +394,7 @@ describe('POST /api/v1/skills', () => {
     mockReturning.mockResolvedValueOnce([{ id: 'skill-1', name: '@myorg/my-skill' }]);
     // Version conflict check returns empty
     mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([]);
     // Version insert
     mockReturning.mockResolvedValueOnce([{ id: 'version-1' }]);
     // Supabase signed URL
@@ -418,6 +425,7 @@ describe('POST /api/v1/skills', () => {
     mockLimit.mockResolvedValueOnce([{ id: 'skill-existing', name: '@testorg/my-skill', publisherId: 'user-1' }]);
     // Version conflict check returns empty (new version)
     mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([]);
     // Version insert
     mockReturning.mockResolvedValueOnce([{ id: 'version-1' }]);
     // Supabase signed URL
@@ -445,6 +453,7 @@ describe('POST /api/v1/skills', () => {
     mockOrgMembership();
     mockLimit.mockResolvedValueOnce([]);
     mockReturning.mockResolvedValueOnce([{ id: 'skill-1', name: '@testorg/my-skill' }]);
+    mockLimit.mockResolvedValueOnce([]);
     mockLimit.mockResolvedValueOnce([]);
     mockReturning.mockResolvedValueOnce([{ id: 'version-1' }]);
     mockCreateSignedUploadUrl.mockResolvedValue({
@@ -477,6 +486,7 @@ describe('POST /api/v1/skills', () => {
     mockOrgMembership();
     mockLimit.mockResolvedValueOnce([{ id: 'skill-existing', name: '@testorg/my-skill', publisherId: 'user-1', orgId: null }]);
     mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([]);
     mockReturning.mockResolvedValueOnce([{ id: 'version-1' }]);
     mockCreateSignedUploadUrl.mockResolvedValue({
       data: { signedUrl: 'https://storage.example.com/upload' },
@@ -506,6 +516,175 @@ describe('POST /api/v1/skills', () => {
         description: 'Updated description',
       }),
     );
+  });
+
+  it('allows first publish with any permissions (no previous version)', async () => {
+    mockVerifyCliAuth.mockResolvedValue({ userId: 'user-1', keyId: 'key-1' });
+    mockLimit.mockResolvedValueOnce([{ name: 'Test User', githubUsername: 'testuser' }]);
+    mockOrgMembership();
+    mockLimit.mockResolvedValueOnce([]);
+    mockReturning.mockResolvedValueOnce([{ id: 'skill-1', name: '@testorg/my-skill' }]);
+    mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([]);
+    mockReturning.mockResolvedValueOnce([{ id: 'version-1' }]);
+    mockCreateSignedUploadUrl.mockResolvedValue({
+      data: { signedUrl: 'https://storage.example.com/upload?token=abc', token: 'abc' },
+      error: null,
+    });
+
+    const { POST } = await import('../route');
+    const request = makeRequest(
+      'http://localhost:3000/api/v1/skills',
+      {
+        manifest: {
+          ...validManifest,
+          permissions: { network: { outbound: ['evil.com'] }, subprocess: true },
+        },
+      },
+      'tank_valid',
+    );
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+  });
+
+  it('rejects PATCH bump that adds new permissions', async () => {
+    mockVerifyCliAuth.mockResolvedValue({ userId: 'user-1', keyId: 'key-1' });
+    mockLimit.mockResolvedValueOnce([{ name: 'Test User', githubUsername: 'testuser' }]);
+    mockOrgMembership();
+    mockLimit.mockResolvedValueOnce([{ id: 'skill-1', name: '@testorg/my-skill', publisherId: 'user-1' }]);
+    mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([{ version: '1.0.0', permissions: {} }]);
+
+    const { POST } = await import('../route');
+    const request = makeRequest(
+      'http://localhost:3000/api/v1/skills',
+      {
+        manifest: {
+          ...validManifest,
+          version: '1.0.1',
+          permissions: { filesystem: { read: ['./secrets/**'] } },
+        },
+      },
+      'tank_valid',
+    );
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toBe('Permission escalation detected');
+    expect(data.details[0]).toContain('PATCH');
+  });
+
+  it('rejects MINOR bump that adds dangerous permissions (network outbound)', async () => {
+    mockVerifyCliAuth.mockResolvedValue({ userId: 'user-1', keyId: 'key-1' });
+    mockLimit.mockResolvedValueOnce([{ name: 'Test User', githubUsername: 'testuser' }]);
+    mockOrgMembership();
+    mockLimit.mockResolvedValueOnce([{ id: 'skill-1', name: '@testorg/my-skill', publisherId: 'user-1' }]);
+    mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([{ version: '1.0.0', permissions: {} }]);
+
+    const { POST } = await import('../route');
+    const request = makeRequest(
+      'http://localhost:3000/api/v1/skills',
+      {
+        manifest: {
+          ...validManifest,
+          version: '1.1.0',
+          permissions: { network: { outbound: ['evil.com'] } },
+        },
+      },
+      'tank_valid',
+    );
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toBe('Permission escalation detected');
+    expect(data.details[0]).toContain('MINOR');
+    expect(data.details[0]).toContain('MAJOR');
+  });
+
+  it('rejects MINOR bump that enables subprocess', async () => {
+    mockVerifyCliAuth.mockResolvedValue({ userId: 'user-1', keyId: 'key-1' });
+    mockLimit.mockResolvedValueOnce([{ name: 'Test User', githubUsername: 'testuser' }]);
+    mockOrgMembership();
+    mockLimit.mockResolvedValueOnce([{ id: 'skill-1', name: '@testorg/my-skill', publisherId: 'user-1' }]);
+    mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([{ version: '1.0.0', permissions: { subprocess: false } }]);
+
+    const { POST } = await import('../route');
+    const request = makeRequest(
+      'http://localhost:3000/api/v1/skills',
+      {
+        manifest: {
+          ...validManifest,
+          version: '1.1.0',
+          permissions: { subprocess: true },
+        },
+      },
+      'tank_valid',
+    );
+    const response = await POST(request);
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toBe('Permission escalation detected');
+    expect(data.details[0]).toContain('Subprocess');
+  });
+
+  it('allows MINOR bump with non-dangerous permission additions', async () => {
+    mockVerifyCliAuth.mockResolvedValue({ userId: 'user-1', keyId: 'key-1' });
+    mockLimit.mockResolvedValueOnce([{ name: 'Test User', githubUsername: 'testuser' }]);
+    mockOrgMembership();
+    mockLimit.mockResolvedValueOnce([{ id: 'skill-1', name: '@testorg/my-skill', publisherId: 'user-1' }]);
+    mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([{ version: '1.0.0', permissions: {} }]);
+    mockReturning.mockResolvedValueOnce([{ id: 'version-1' }]);
+    mockCreateSignedUploadUrl.mockResolvedValue({
+      data: { signedUrl: 'https://storage.example.com/upload?token=abc', token: 'abc' },
+      error: null,
+    });
+
+    const { POST } = await import('../route');
+    const request = makeRequest(
+      'http://localhost:3000/api/v1/skills',
+      {
+        manifest: {
+          ...validManifest,
+          version: '1.1.0',
+          permissions: { filesystem: { write: ['./output/**'] } },
+        },
+      },
+      'tank_valid',
+    );
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+  });
+
+  it('allows MAJOR bump with any permission changes', async () => {
+    mockVerifyCliAuth.mockResolvedValue({ userId: 'user-1', keyId: 'key-1' });
+    mockLimit.mockResolvedValueOnce([{ name: 'Test User', githubUsername: 'testuser' }]);
+    mockOrgMembership();
+    mockLimit.mockResolvedValueOnce([{ id: 'skill-1', name: '@testorg/my-skill', publisherId: 'user-1' }]);
+    mockLimit.mockResolvedValueOnce([]);
+    mockLimit.mockResolvedValueOnce([{ version: '1.0.0', permissions: {} }]);
+    mockReturning.mockResolvedValueOnce([{ id: 'version-1' }]);
+    mockCreateSignedUploadUrl.mockResolvedValue({
+      data: { signedUrl: 'https://storage.example.com/upload?token=abc', token: 'abc' },
+      error: null,
+    });
+
+    const { POST } = await import('../route');
+    const request = makeRequest(
+      'http://localhost:3000/api/v1/skills',
+      {
+        manifest: {
+          name: '@testorg/my-skill',
+          version: '2.0.0',
+          permissions: { network: { outbound: ['evil.com'] }, subprocess: true },
+        },
+      },
+      'tank_valid',
+    );
+    const response = await POST(request);
+    expect(response.status).toBe(200);
   });
 });
 

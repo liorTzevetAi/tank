@@ -83,6 +83,7 @@ web/
 │   │   ├── service.ts            # Resend email service
 │   │   └── rate-limiter.ts       # Rate limiting for emails
 │   ├── audit-score.ts            # 0–10 score, 8 weighted checks
+│   ├── permission-escalation.ts  # Semver parsing + permission escalation detection at publish
 │   ├── logger.ts                 # pino → Loki structured logging
 │   ├── config-validation.ts      # Environment validation
 │   ├── utils.ts                  # Shared utilities
@@ -175,15 +176,15 @@ web/
 - **Migrations**: Drizzle Kit, stored in `drizzle/`
 
 ### Audit Score (0-10)
-Always 8 weighted entries:
-1. README present (1.5 pts)
-2. LICENSE present (1.0 pts)
-3. Permissions declared (1.5 pts)
-4. Tests present (1.0 pts)
-5. TypeScript types (1.0 pts)
-6. Examples present (1.0 pts)
-7. Size under limit (1.0 pts)
-8. Documentation (1.0 pts)
+Always 8 entries, max 10 points total:
+1. SKILL.md present (1 pt) — manifest name non-empty
+2. Description present (1 pt) — manifest description non-empty
+3. Permissions declared (1 pt) — permissions object not empty
+4. No security issues (2 pts) — no findings from security scan (default pass if no analysis)
+5. Permission extraction match (2 pts) — extracted permissions ⊆ declared (default pass if no analysis)
+6. File count reasonable (1 pt) — fewer than 100 files
+7. README documentation (1 pt) — readme field non-empty
+8. Package size reasonable (1 pt) — tarball under 5 MB
 
 ### Full-Text Search
 - `searchVector` column on skills table

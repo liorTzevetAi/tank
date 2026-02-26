@@ -130,69 +130,59 @@ If a publisher tries to release a PATCH that adds network access, the publish is
 
 ### 4. Security Layers
 
-Security at four stages:
+Security at multiple stages:
 
-**Publish-time:**
-- Mandatory code signing (Sigstore/cosign)
-- Static analysis with agent-specific rules
+**Publish-time (implemented):**
+- 6-stage security scanning pipeline (ingest, structure, AST analysis, injection detection, secrets, supply chain)
+- Permission extraction and cross-checking against declared capabilities
 - Capability declaration validation
-- SBOM generation
 - No arbitrary install scripts
 
-**Review & audit (ongoing):**
-- Automated audit score (0-10)
-- Verified publisher program
+**Review & audit (implemented):**
+- Automated audit score (0-10) based on 8 weighted checks
 - Permission escalation detection between versions
-- Dependency vulnerability scanning
 
-**Install-time:**
-- Lockfile integrity verification
-- Interactive permission prompt for budget-exceeding capabilities
-- Dependency tree resolution with conflict detection
+**Install-time (implemented):**
+- Lockfile integrity verification (SHA-512)
+- Permission budget enforcement — skills exceeding the project budget are rejected
 
-**Runtime:**
-- Sandboxed execution (WASM or container isolation)
-- Capability broker enforcing declared permissions
-- Rate limiting per skill
-- Full audit log
-- Anomaly detection
+**Planned (Phase 2-3):**
+- Code signing via Sigstore/cosign
+- SBOM generation
+- Verified publisher program
+- Sandboxed execution (WASM isolation)
+- Runtime permission enforcement
 
 ### 5. Permission Model
 
-Every skill declares what it needs. The system enforces it at runtime:
+Every skill declares what it needs. The system enforces it at install time and cross-checks it during scanning:
 
-```yaml
-capabilities:
-  - network:outbound
-  - filesystem:read
-
-permissions:
-  network:
-    allowed_domains: ["*.example.com"]
-    max_requests_per_minute: 60
-  filesystem:
-    read: ["./data/**"]
-    write: []
-  subprocess: false
-  secrets:
-    required: ["API_KEY"]
+```json
+{
+  "permissions": {
+    "network": { "outbound": ["*.example.com"] },
+    "filesystem": { "read": ["./data/**"], "write": [] },
+    "subprocess": false
+  }
+}
 ```
+
+The 6-stage scanner independently extracts permissions from code (network calls, filesystem operations, subprocess spawning) and cross-checks them against declared permissions. Mismatches result in HIGH severity findings and reduced audit scores.
 
 ### 6. Audit Score
 
-Transparent 0-10 score for every skill:
+Transparent 0-10 score for every skill, computed from 8 weighted checks:
 
 | Check | Points |
 |-------|--------|
-| Code signing present | +1 |
-| Static analysis passes | +1 |
-| No install scripts | +1 |
-| Reproducible build | +1 |
-| SBOM complete | +1 |
-| Test coverage > 80% | +1 |
-| Community security reviews (max 2) | +1 each |
-| Verified publisher | +1 |
-| No known vulnerabilities | +1 |
+| SKILL.md present (properly packaged) | +1 |
+| Description present in manifest | +1 |
+| Permissions declared (not empty) | +1 |
+| No security issues found in scan | +2 |
+| Extracted permissions match declared | +2 |
+| File count reasonable (< 100 files) | +1 |
+| README documentation present | +1 |
+| Package size reasonable (< 5 MB) | +1 |
 
 ### 7. CLI
 
@@ -208,7 +198,6 @@ tank audit
 tank audit @org/skill-name
 tank permissions
 tank verify
-tank diff @org/skill-name 2.0 3.0
 
 # Publishing
 tank publish
@@ -225,12 +214,14 @@ tank info @org/skill-name
 POST   /v1/skills                          # publish
 GET    /v1/skills/:name                    # latest metadata
 GET    /v1/skills/:name/:version           # specific version
+GET    /v1/skills/:name/versions           # list all versions
+GET    /v1/search?q=...                    # full-text search
+```
+
+**Planned endpoints:**
+```
 GET    /v1/skills/:name/audit              # audit history
-GET    /v1/skills/:name/deps               # dependency tree
 GET    /v1/skills/:name/diff/:v1/:v2       # permission + schema diff
-GET    /v1/search?q=...                    # semantic search
-POST   /v1/skills/:name/review             # submit security review
-POST   /v1/verify                          # batch verify signatures
 ```
 
 ---
@@ -239,7 +230,7 @@ POST   /v1/verify                          # batch verify signatures
 
 - **Not an agent framework** — we don't define how agents work
 - **Not a skill authoring tool** — we use the existing SKILL.md standard
-- **Not a runtime/orchestrator** — we provide the sandbox spec; agent runtimes integrate via SDK
+- **Not a runtime/orchestrator** — we provide security scanning and install-time enforcement; runtime sandboxing is planned
 - **Not locked to one agent** — works with Claude Code, Codex, Cursor, or any SKILL.md-compatible agent
 
 ## Competitive Landscape
@@ -247,15 +238,15 @@ POST   /v1/verify                          # batch verify signatures
 | | skills.sh | ClawHub | SkillsMP | **Tank** |
 |-|-----------|---------|----------|----------|
 | Discovery | Yes | Yes | Yes | Yes |
-| Versioning | Git tags | None | None | Enforced semver |
-| Lockfile | No | No | No | Yes |
-| Permissions | No | No | No | Declared + enforced |
-| Code signing | No | No | No | Mandatory |
-| Static analysis | No | Basic | No | Agent-specific |
+| Versioning | Git tags | None | None | Semver with escalation detection |
+| Lockfile | No | No | No | Yes (SHA-512) |
+| Permissions | No | No | No | Declared + enforced at install |
+| Static analysis | No | Basic | No | 6-stage security pipeline |
 | Audit score | No | No | No | Transparent 0-10 |
-| SBOM | No | No | No | Required |
-| Sandbox | No | No | No | WASM/container |
 | Install scripts | Allowed | Allowed | N/A | Forbidden |
+| Code signing | No | No | No | Planned (Sigstore) |
+| SBOM | No | No | No | Planned |
+| Sandbox | No | No | No | Planned (WASM) |
 
 ## Target Users
 
@@ -273,20 +264,23 @@ POST   /v1/verify                          # batch verify signatures
 - **Zero successful supply chain attacks** (north star)
 - Integrations with agent frameworks (Claude Code, Codex, etc.)
 
-## Technical Direction
+## Technical Direction (Implemented)
 
-- **Registry API**: Node.js (NestJS or Hono)
-- **Package storage**: OCI-compatible registry
-- **Metadata storage**: PostgreSQL
-- **Semantic search**: Vector database (Milvus or similar)
-- **Code signing**: Sigstore (cosign)
-- **Static analysis**: Semgrep with custom agent-specific rulesets
-- **Sandbox runtime**: WASM (Wasmtime) with Firecracker micro-VM option
-- **CLI**: Node.js or Rust (TBD)
+- **Registry API**: Next.js 15 App Router (REST endpoints)
+- **Package storage**: Supabase Storage (tarballs)
+- **Metadata storage**: PostgreSQL via Drizzle ORM
+- **Search**: PostgreSQL full-text search with GIN index
+- **Static analysis**: Custom 6-stage Python pipeline (AST analysis, injection detection, secrets scanning, supply chain)
+- **CLI**: Node.js (Commander.js), 16 commands
+
+## Technical Direction (Planned)
+
+- **Code signing**: Sigstore (cosign) — keyless signing via GitHub OIDC
+- **Sandbox runtime**: WASM (Wasmtime) for skill execution isolation
+- **Semantic search**: Vector database for improved skill discovery
 
 ## Open Questions
 
 1. **Private registries**: Support from day one (like npm private packages)?
 2. **Monetization**: Open-source core + paid enterprise features? Or fully open-source with hosted SaaS?
-3. **MVP scope**: Registry + CLI + basic audit, without sandbox runtime?
-4. **Governance**: How to handle skill disputes, takedowns, and namespace squatting?
+3. **Governance**: How to handle skill disputes, takedowns, and namespace squatting?

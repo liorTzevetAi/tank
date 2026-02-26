@@ -211,6 +211,18 @@ export async function installCommand(options: InstallOptions): Promise<void> {
     }
   }
 
+  // 6.5. Check audit score threshold
+  const auditMinScore = global ? undefined : (skillsJson.audit as { min_score?: number } | undefined)?.min_score;
+  if (!global && auditMinScore !== undefined) {
+    if (metadata.auditScore === null || metadata.auditScore === undefined) {
+      logger.warn(`Audit score not yet available for ${name}. Install proceeding without audit score check.`);
+    } else if (metadata.auditScore < auditMinScore) {
+      throw new Error(
+        `Audit score ${metadata.auditScore} for ${name} is below minimum threshold ${auditMinScore} defined in skills.json`,
+      );
+    }
+  }
+
   // 7. Download tarball
   spinner.text = `Downloading ${name}@${resolved}...`;
   let downloadRes: Response;

@@ -11,7 +11,7 @@
 <p align="center">
   Security-first package manager for AI agent skills.
   <br />
-  <em>"I know Kung Fu." — but verified, signed, and sandboxed.</em>
+  <em>"I know Kung Fu." — but verified, locked, and scanned.</em>
 </p>
 
 <p align="center">
@@ -25,7 +25,7 @@
 
 AI coding agents (Claude Code, Codex, Cursor) can be extended with **skills** — reusable packages that teach agents how to perform tasks. The ecosystem is growing fast: 110,000+ installs in 4 days on one registry alone.
 
-But today's skill registries have **no versioning, no lockfiles, no permissions, no code signing, and no audit trail**. In February 2026, the ClawHavoc incident revealed that 341 malicious skills (12% of a major marketplace) were distributing credential-stealing malware.
+But today's skill registries have **no versioning, no lockfiles, no permissions, and no security scanning**. In February 2026, the ClawHavoc incident revealed that 341 malicious skills (12% of a major marketplace) were distributing credential-stealing malware.
 
 Agent skills are more dangerous than npm packages because they execute with the **agent's full authority** — reading files, making API calls, running shell commands. The attack surface is fundamentally larger.
 
@@ -35,13 +35,13 @@ Tank is the **npm for agent skills**, with security built into the foundation:
 
 | Feature | npm (2012) | Current Registries | Tank |
 |---------|-----------|-------------------|------|
-| Versioning | Social contract | Git tags / none | **Enforced semver** |
-| Lockfile | `package-lock.json` | None | **`skills.lock`** |
-| Permissions | None | None | **Declared + enforced at runtime** |
-| Code signing | npm provenance (2023) | None | **Mandatory from day one** |
-| Static analysis | None built-in | Basic / none | **Agent-specific rules** |
+| Versioning | Social contract | Git tags / none | **Semver with escalation detection** |
+| Lockfile | `package-lock.json` | None | **`skills.lock` with SHA-512** |
+| Permissions | None | None | **Declared + enforced at install** |
+| Static analysis | None built-in | Basic / none | **6-stage security pipeline** |
 | Audit score | `npm audit` (deps only) | None | **Transparent 0-10 score** |
-| Sandbox | None | None | **WASM / container isolation** |
+| Code signing | npm provenance (2023) | None | Planned (Sigstore) |
+| Sandbox | None | None | Planned (Phase 3) |
 
 ## Quick Look
 
@@ -140,7 +140,7 @@ tank/
 
 ## Project Status
 
-> **Tank MVP is code-complete with 461 tests passing.** We're building in the open from day one.
+> **Tank MVP is code-complete.** We're building in the open from day one.
 
 See the [Roadmap](docs/roadmap.md) for what we're building and when.
 

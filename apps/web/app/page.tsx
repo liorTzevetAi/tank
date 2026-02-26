@@ -35,13 +35,13 @@ const features = [
     icon: Eye,
     title: 'Audit Scores',
     description:
-      'Transparent 0–10 security score. Code signing, static analysis, reproducible builds — all visible.',
+      'Transparent 0–10 security score. Static analysis, permission matching, package hygiene — all visible.',
   },
   {
     icon: GitBranch,
     title: 'Enforced Semver',
     description:
-      'Not a social contract — enforced. A patch that adds network access? Rejected. Breaking changes require major bump.',
+      'Not a social contract. A patch that adds network access? Detected and flagged. Permission escalation requires a major bump.',
   },
   {
     icon: Terminal,
@@ -53,7 +53,7 @@ const features = [
     icon: Globe,
     title: 'Open Source (MIT)',
     description:
-      'Built in the open from day one. MIT licensed. Community-driven security reviews. No vendor lock-in.',
+      'Built in the open from day one. MIT licensed. Transparent scanning. No vendor lock-in.',
   },
 ];
 
@@ -62,8 +62,8 @@ const installCommand = 'curl -fsSL https://raw.githubusercontent.com/tankpkg/tan
 const cliCommands = [
   { cmd: 'tank install @vercel/next-skill', desc: 'Install with integrity verification' },
   { cmd: 'tank permissions', desc: 'See what your agent can do' },
-  { cmd: 'tank audit', desc: 'Check signatures & vulnerabilities' },
-  { cmd: 'tank publish', desc: 'Publish with signing & analysis' },
+  { cmd: 'tank audit', desc: 'Check security scan results' },
+  { cmd: 'tank publish', desc: 'Publish with 6-stage analysis' },
 ];
 
 export default function Home() {
@@ -135,7 +135,7 @@ export default function Home() {
 
               <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
                 Today&apos;s skill registries have no versioning, no lockfiles, no permissions, and no
-                code signing. <span className="text-foreground font-medium">Tank is the npm for agent skills</span> —
+                security scanning. <span className="text-foreground font-medium">Tank is the npm for agent skills</span> —
                 with security built in from day one.
               </p>
 
@@ -236,7 +236,7 @@ export default function Home() {
               Security at <span className="text-emerald-400">every layer</span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              From publish to install to runtime — every step is verified, signed, and sandboxed.
+              From publish to install — every skill is scanned, scored, and verified.
             </p>
           </div>
 

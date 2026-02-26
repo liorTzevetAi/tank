@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { skillsJsonSchema } from '@tank/shared';
 import { verifyCliAuth } from '@/lib/auth-helpers';
 import { db } from '@/lib/db';
 import { skills, skillVersions } from '@/lib/db/schema';
 import { organization, member, user, account } from '@/lib/db/auth-schema';
 import { getStorageProvider } from '@/lib/storage/provider';
+import { checkPermissionEscalation, type VersionPermissions } from '@/lib/permission-escalation';
 
 export async function POST(request: Request) {
   // 1. Verify CLI auth
@@ -196,6 +197,34 @@ export async function POST(request: Request) {
       { error: `Version ${version} already exists for ${name}` },
       { status: 409 },
     );
+  }
+
+  // 8b. Permission escalation check — compare against previous version
+  const previousVersions = await db
+    .select({ version: skillVersions.version, permissions: skillVersions.permissions })
+    .from(skillVersions)
+    .where(eq(skillVersions.skillId, skill.id))
+    .orderBy(desc(skillVersions.createdAt))
+    .limit(1);
+
+  if (previousVersions.length > 0) {
+    const prev = previousVersions[0];
+    const escalationResult = checkPermissionEscalation(
+      prev.version,
+      prev.permissions as VersionPermissions,
+      version,
+      (manifest.permissions ?? {}) as VersionPermissions,
+    );
+
+    if (!escalationResult.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Permission escalation detected',
+          details: escalationResult.violations,
+        },
+        { status: 400 },
+      );
+    }
   }
 
   // 9. Create skill_version record with pending-upload status
