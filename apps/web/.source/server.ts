@@ -1,6 +1,9 @@
 // @ts-nocheck
-import * as __fd_glob_7 from "../content/docs/self-hosting.mdx?collection=docs"
-import * as __fd_glob_6 from "../content/docs/publishing.mdx?collection=docs"
+import * as __fd_glob_10 from "../content/docs/self-hosting.mdx?collection=docs"
+import * as __fd_glob_9 from "../content/docs/self-host-quickstart.mdx?collection=docs"
+import * as __fd_glob_8 from "../content/docs/security-checklist.mdx?collection=docs"
+import * as __fd_glob_7 from "../content/docs/publishing.mdx?collection=docs"
+import * as __fd_glob_6 from "../content/docs/publish-first-skill.mdx?collection=docs"
 import * as __fd_glob_5 from "../content/docs/installing.mdx?collection=docs"
 import * as __fd_glob_4 from "../content/docs/index.mdx?collection=docs"
 import * as __fd_glob_3 from "../content/docs/getting-started.mdx?collection=docs"
@@ -15,4 +18,4 @@ const create = server<typeof Config, import("fumadocs-mdx/runtime/types").Intern
   }
 }>({"doc":{"passthroughs":["extractedReferences"]}});
 
-export const docs = await create.docs("docs", "content/docs", {"meta.json": __fd_glob_0, }, {"api.mdx": __fd_glob_1, "cli.mdx": __fd_glob_2, "getting-started.mdx": __fd_glob_3, "index.mdx": __fd_glob_4, "installing.mdx": __fd_glob_5, "publishing.mdx": __fd_glob_6, "self-hosting.mdx": __fd_glob_7, });
+export const docs = await create.docs("docs", "content/docs", {"meta.json": __fd_glob_0, }, {"api.mdx": __fd_glob_1, "cli.mdx": __fd_glob_2, "getting-started.mdx": __fd_glob_3, "index.mdx": __fd_glob_4, "installing.mdx": __fd_glob_5, "publish-first-skill.mdx": __fd_glob_6, "publishing.mdx": __fd_glob_7, "security-checklist.mdx": __fd_glob_8, "self-host-quickstart.mdx": __fd_glob_9, "self-hosting.mdx": __fd_glob_10, });
