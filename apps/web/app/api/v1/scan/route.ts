@@ -43,13 +43,13 @@ async function triggerSecurityScan(
   const storage = getStorageProvider();
   const { signedUrl: uploadUrl } = await storage.createSignedUploadUrl(tempPath);
 
-  // Upload the tarball
+  // Upload the tarball (convert Buffer to Uint8Array for fetch compatibility)
   const uploadRes = await fetch(uploadUrl, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/gzip',
     },
-    body: tarballBuffer,
+    body: new Uint8Array(tarballBuffer),
   });
 
   if (!uploadRes.ok) {
