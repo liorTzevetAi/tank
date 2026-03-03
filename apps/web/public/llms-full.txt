@@ -87,6 +87,17 @@ POST /api/v1/cli-auth/start
 ```
 
 
+## /api/v1/scan
+
+### POST /api/v1/scan
+
+POST endpoint for /scan
+
+```http
+POST /api/v1/scan
+```
+
+
 ## /api/v1/search
 
 ### GET /api/v1/search
