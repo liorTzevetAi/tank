@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { desc, inArray, sql } from 'drizzle-orm';
+import { desc, inArray } from 'drizzle-orm';
 import { withAdminAuth, type AdminAuthContext } from '@/lib/admin-middleware';
 import { db } from '@/lib/db';
 import { skillVersions } from '@/lib/db/schema';
@@ -10,8 +10,7 @@ const RESCANNABLE_STATUSES = ['completed', 'flagged', 'scan-failed'] as const;
 
 const handler = async (_req: NextRequest, _context: AdminAuthContext): Promise<NextResponse> => {
   try {
-    // Get only the latest version of each skill using DISTINCT ON
-    // This is PostgreSQL-specific but very efficient
+    // Get only the latest version of each skill by ordering and filtering
     const versions = await db
       .select({
         id: skillVersions.id,
@@ -27,9 +26,7 @@ const handler = async (_req: NextRequest, _context: AdminAuthContext): Promise<N
       .from(skillVersions)
       .where(inArray(skillVersions.auditStatus, [...RESCANNABLE_STATUSES]))
       .orderBy(skillVersions.skillId, desc(skillVersions.createdAt))
-      .limit(1000) // Safety limit
-      // Use raw SQL for DISTINCT ON since Drizzle doesn't support it directly
-      .execute();
+      .limit(1000); // Safety limit
 
     // Filter to keep only the latest version per skill (first occurrence of each skillId)
     const latestVersions = new Map<string, typeof versions[0]>();
