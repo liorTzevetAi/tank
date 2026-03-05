@@ -17,6 +17,18 @@ interface ScanFinding {
   evidence: string | null;
 }
 
+interface LLMAnalysis {
+  enabled: boolean;
+  mode: 'byollm' | 'builtin' | 'disabled';
+  provider_used?: string;
+  findings_reviewed?: number;
+  findings_dismissed?: number;
+  findings_confirmed?: number;
+  findings_uncertain?: number;
+  latency_ms?: number;
+  error?: string;
+}
+
 interface ScanResponse {
   scan_id: string | null;
   verdict: 'pass' | 'pass_with_notes' | 'flagged' | 'fail';
@@ -28,6 +40,7 @@ interface ScanResponse {
     findings: ScanFinding[];
     duration_ms: number;
   }>;
+  llm_analysis?: LLMAnalysis;
   duration_ms: number;
 }
 
@@ -209,6 +222,36 @@ export function registerScanSkillTool(server: McpServer): void {
         for (const stage of scanResult.stage_results) {
           const status = stage.status === 'passed' ? '✓' : '✗';
           lines.push(`- ${status} ${stage.stage} (${stage.duration_ms}ms)`);
+        }
+        lines.push('');
+      }
+
+      // LLM Analysis
+      if (scanResult.llm_analysis && scanResult.llm_analysis.enabled) {
+        const llm = scanResult.llm_analysis;
+        lines.push('### LLM Analysis');
+        lines.push('');
+        lines.push(`**Mode:** ${llm.mode}`);
+        if (llm.provider_used) {
+          lines.push(`**Provider:** ${llm.provider_used}`);
+        }
+        if (llm.findings_reviewed !== undefined && llm.findings_reviewed > 0) {
+          lines.push(`**Findings Reviewed:** ${llm.findings_reviewed}`);
+        }
+        if (llm.findings_dismissed !== undefined && llm.findings_dismissed > 0) {
+          lines.push(`**False Positives Dismissed:** ${llm.findings_dismissed}`);
+        }
+        if (llm.findings_confirmed !== undefined && llm.findings_confirmed > 0) {
+          lines.push(`**Threats Confirmed:** ${llm.findings_confirmed}`);
+        }
+        if (llm.findings_uncertain !== undefined && llm.findings_uncertain > 0) {
+          lines.push(`**Uncertain:** ${llm.findings_uncertain}`);
+        }
+        if (llm.latency_ms) {
+          lines.push(`**Latency:** ${llm.latency_ms}ms`);
+        }
+        if (llm.error) {
+          lines.push(`**Error:** ${llm.error}`);
         }
         lines.push('');
       }
