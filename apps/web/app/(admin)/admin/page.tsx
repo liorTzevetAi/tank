@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { count, desc, eq, inArray } from 'drizzle-orm';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { RescanSkillsButton } from '@/components/admin/rescan-skills-button';
 import { db } from '@/lib/db';
 import { auditEvents, skills, user, userStatus } from '@/lib/db/schema';
 
@@ -92,18 +91,6 @@ export default async function AdminDashboardPage() {
         <MetricCard label="Quarantined" value={metrics.quarantined} />
         <MetricCard label="Banned users" value={metrics.banned} />
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Security Scanning</CardTitle>
-          <CardDescription>
-            Manually trigger security scans for all published skills.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RescanSkillsButton />
-        </CardContent>
-      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
