@@ -11,6 +11,32 @@ permissions:
   security-events: write
 
 jobs:
+  deploy-python-api:
+    runs-on: ubuntu-latest
+    # Only deploy on push to main, not on PRs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if python-api changed
+        id: check-changes
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q "^python-api/"; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy Python API to Vercel
+        if: steps.check-changes.outputs.changed == 'true'
+        run: |
+          cd python-api
+          npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PYTHON_API_PROJECT_ID }}
+
   test:
     runs-on: ubuntu-latest
     permissions:

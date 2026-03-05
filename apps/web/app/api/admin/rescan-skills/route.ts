@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { inArray } from 'drizzle-orm';
+import { desc, inArray } from 'drizzle-orm';
 import { withAdminAuth, type AdminAuthContext } from '@/lib/admin-middleware';
 import { db } from '@/lib/db';
 import { skillVersions } from '@/lib/db/schema';
@@ -10,7 +10,7 @@ const RESCANNABLE_STATUSES = ['completed', 'flagged', 'scan-failed'] as const;
 
 const handler = async (_req: NextRequest, _context: AdminAuthContext): Promise<NextResponse> => {
   try {
-    // Get all published skill versions with rescannable statuses
+    // Get only the latest version of each skill by ordering and filtering
     const versions = await db
       .select({
         id: skillVersions.id,
@@ -24,9 +24,20 @@ const handler = async (_req: NextRequest, _context: AdminAuthContext): Promise<N
         tarballSize: skillVersions.tarballSize,
       })
       .from(skillVersions)
-      .where(inArray(skillVersions.auditStatus, [...RESCANNABLE_STATUSES]));
+      .where(inArray(skillVersions.auditStatus, [...RESCANNABLE_STATUSES]))
+      .orderBy(skillVersions.skillId, desc(skillVersions.createdAt))
+      .limit(1000); // Safety limit
 
-    if (versions.length === 0) {
+    // Filter to keep only the latest version per skill (first occurrence of each skillId)
+    const latestVersions = new Map<string, typeof versions[0]>();
+    for (const v of versions) {
+      if (!latestVersions.has(v.skillId)) {
+        latestVersions.set(v.skillId, v);
+      }
+    }
+    const versionsToScan = Array.from(latestVersions.values());
+
+    if (versionsToScan.length === 0) {
       return NextResponse.json({
         message: 'No published versions to rescan',
         scanned: 0,
@@ -35,13 +46,13 @@ const handler = async (_req: NextRequest, _context: AdminAuthContext): Promise<N
 
     // Rescan all versions (in series to avoid overwhelming the scan service)
     const results = {
-      total: versions.length,
+      total: versionsToScan.length,
       success: 0,
       failed: 0,
       errors: [] as Array<{ versionId: string; error: string }>,
     };
 
-    for (const version of versions) {
+    for (const version of versionsToScan) {
       const result = await rescanVersion(version);
       if (result.success) {
         results.success++;
@@ -55,7 +66,7 @@ const handler = async (_req: NextRequest, _context: AdminAuthContext): Promise<N
     }
 
     return NextResponse.json({
-      message: `Rescanned ${results.total} skill versions`,
+      message: `Rescanned ${results.total} skill versions (latest only)`,
       ...results,
     });
   } catch (error) {
