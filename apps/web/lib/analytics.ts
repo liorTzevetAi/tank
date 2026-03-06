@@ -3,11 +3,9 @@
  * (safe for dev, tests, ad-blockers). Event names follow GA4 snake_case convention.
  */
 
-type GtagFn = (
-  command: 'event',
-  eventName: string,
-  params?: Record<string, string | number | boolean>,
-) => void;
+import posthog from 'posthog-js';
+
+type GtagFn = (...args: unknown[]) => void;
 
 declare global {
   interface Window {
@@ -19,8 +17,12 @@ function sendEvent(
   eventName: string,
   params?: Record<string, string | number | boolean>,
 ): void {
-  if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+  if (typeof window === 'undefined') return;
+  if (typeof window.gtag === 'function') {
     window.gtag('event', eventName, params);
+  }
+  if (posthog.__loaded) {
+    posthog.capture(eventName, params);
   }
 }
 
