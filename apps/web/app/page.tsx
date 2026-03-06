@@ -23,6 +23,7 @@ import { skills } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { HomeNavAuthCta, HomePrimaryAuthCta } from './home-auth-cta';
 import { CopyInstallButton } from './copy-install-button';
+import { CookiePreferencesButton } from './cookie-preferences-button';
 
 const GITHUB_REPO = 'tankpkg/tank';
 
@@ -596,6 +597,7 @@ export default async function Home() {
                 </svg>
                 GitHub
               </a>
+              <CookiePreferencesButton />
             </div>
           </div>
         </div>
