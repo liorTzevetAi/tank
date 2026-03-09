@@ -24,7 +24,7 @@ All commands support these options:
 
 ## tank init
 
-Create a new skills.json in the current directory
+Create a new tank.json in the current directory
 
 ```bash
 tank init
@@ -39,7 +39,7 @@ tank init
 | `--skill-version <version>` | Skill version (default: 0.1.0) |
 | `--description <desc>` | Skill description |
 | `--private` | Make skill private |
-| `--force` | Overwrite existing skills.json |
+| `--force` | Overwrite existing tank.json |
 
 
 ## tank login
@@ -297,7 +297,7 @@ tank upgrade [version]
 
 | Command | Alias(es) | Description |
 |---------|-----------|-------------|
-| `tank init` | — | Create a new skills.json in the current directory |
+| `tank init` | — | Create a new tank.json in the current directory |
 | `tank login` | — | Authenticate with the Tank registry via browser |
 | `tank whoami` | — | Show the currently logged-in user |
 | `tank logout` | — | Remove authentication token from config |
@@ -331,8 +331,8 @@ tank upgrade [version]
 | File | Purpose |
 |------|---------|
 | `~/.tank/config.json` | Auth token and registry URL (permissions: `0600`) |
-| `skills.json` | Project manifest — skill metadata, dependencies, and permission budget |
-| `skills.lock` | Deterministic lockfile — pinned versions with SHA-512 hashes |
+| `tank.json` | Project manifest — skill metadata, dependencies, and permission budget |
+| `tank.lock` | Deterministic lockfile — pinned versions with SHA-512 hashes |
 
 ## Exit Codes
 
