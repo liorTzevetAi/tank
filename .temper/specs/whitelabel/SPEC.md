@@ -14,6 +14,7 @@ Enable self-hosted Tank deployments to rebrand the web registry while maintainin
 ## Scope
 
 ### In Scope
+
 - Product name customization
 - Logo, favicon, and icon customization
 - Color theme customization (primary, secondary, accent)
@@ -23,6 +24,7 @@ Enable self-hosted Tank deployments to rebrand the web registry while maintainin
 - "Powered by Tank" footer (mandatory)
 
 ### Out of Scope
+
 - CLI branding (remains Tank)
 - MCP server messages (remains Tank)
 - Core functionality changes
@@ -64,7 +66,7 @@ BRAND_SHOW_POWERED_BY="true"                # Always true for compliance
 ### Runtime Config API
 
 ```typescript
-// apps/web/lib/branding.ts
+// apps/registry-legacy/lib/branding.ts
 interface BrandConfig {
   name: string;
   tagline: string;
@@ -84,8 +86,8 @@ interface BrandConfig {
     email?: string;
   };
   poweredBy: {
-    name: 'Tank';
-    url: 'https://tankpkg.dev';
+    name: "Tank";
+    url: "https://tankpkg.dev";
     required: true;
   };
 }
@@ -97,33 +99,33 @@ interface BrandConfig {
 
 ### Files Modified (Est. 35-45 files)
 
-| Category | Files | Impact |
-|----------|-------|--------|
-| **Layouts** | `apps/web/app/layout.tsx`, all route group layouts | Meta tags, title template |
-| **Components** | `Header.tsx`, `Footer.tsx`, `Logo.tsx`, `ThemeProvider.tsx` | Dynamic branding |
-| **Pages** | Landing, auth pages, dashboard | Static text → config refs |
-| **API Routes** | OG image generation, manifest, sitemap | Dynamic brand data |
-| **Emails** | Email templates (if any) | Brand colors/logo |
-| **Config** | `lib/branding.ts` (new) | Central config accessor |
-| **Types** | `@tank/shared` | Shared brand types |
+| Category       | Files                                                          | Impact                    |
+| -------------- | -------------------------------------------------------------- | ------------------------- |
+| **Layouts**    | `apps/registry-legacy/app/layout.tsx`, all route group layouts | Meta tags, title template |
+| **Components** | `Header.tsx`, `Footer.tsx`, `Logo.tsx`, `ThemeProvider.tsx`    | Dynamic branding          |
+| **Pages**      | Landing, auth pages, dashboard                                 | Static text → config refs |
+| **API Routes** | OG image generation, manifest, sitemap                         | Dynamic brand data        |
+| **Emails**     | Email templates (if any)                                       | Brand colors/logo         |
+| **Config**     | `lib/branding.ts` (new)                                        | Central config accessor   |
+| **Types**      | `@tank/shared`                                                 | Shared brand types        |
 
 ### Consumers Affected
 
-| Consumer | Impact | Migration |
-|----------|--------|-----------|
+| Consumer     | Impact   | Migration                    |
+| ------------ | -------- | ---------------------------- |
 | Self-hosters | **High** | Set env vars, add logo files |
-| Tank SaaS | **Low** | Defaults to Tank branding |
-| CLI users | **None** | CLI unchanged |
-| MCP users | **None** | MCP unchanged |
+| Tank SaaS    | **Low**  | Defaults to Tank branding    |
+| CLI users    | **None** | CLI unchanged                |
+| MCP users    | **None** | MCP unchanged                |
 
 ### Contracts
 
-| Contract | Change | Breaking? |
-|----------|--------|-----------|
-| Web UI | Branding dynamic | No (defaults to Tank) |
-| Meta tags | Dynamic from config | No |
-| PWA manifest | Dynamic from config | No |
-| API responses | No change | No |
+| Contract      | Change              | Breaking?             |
+| ------------- | ------------------- | --------------------- |
+| Web UI        | Branding dynamic    | No (defaults to Tank) |
+| Meta tags     | Dynamic from config | No                    |
+| PWA manifest  | Dynamic from config | No                    |
+| API responses | No change           | No                    |
 
 ### Architectural Drift Risk
 
@@ -135,7 +137,7 @@ interface BrandConfig {
 
 ### Phase 1: Core Infrastructure (Est. 4-6 hours)
 
-1. Create `apps/web/lib/branding.ts` with config accessor
+1. Create `apps/registry-legacy/lib/branding.ts` with config accessor
 2. Add brand-related env vars to `.env.example`
 3. Create TypeScript types in `@tank/shared`
 4. Add CSS custom properties for theme colors

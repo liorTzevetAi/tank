@@ -1,4 +1,10 @@
-import type { Permissions } from '@internal/shared';
+import type { Permissions } from '@internals/schemas';
+
+export interface PermissionViolation {
+  skillName: string;
+  type: 'network.outbound' | 'filesystem.read' | 'filesystem.write' | 'subprocess';
+  requested: string;
+}
 
 /**
  * Check if a skill's permissions fit within the project's permission budget.
@@ -89,32 +95,19 @@ export function isPathAllowed(requestedPath: string, allowedPaths: string[]): bo
   return false;
 }
 
-export interface PermissionViolation {
-  skillName: string;
-  type: 'network.outbound' | 'filesystem.read' | 'filesystem.write' | 'subprocess';
-  requested: string;
-}
-
-/**
- * Collect all permission violations without throwing.
- * Mirrors checkPermissionBudget() logic but returns violations as an array.
- */
 export function collectPermissionViolations(
   budget: Permissions,
   skillPerms: Permissions | undefined,
   skillName: string
 ): PermissionViolation[] {
-  if (!skillPerms) return [];
-
   const violations: PermissionViolation[] = [];
+  if (!skillPerms) return violations;
 
-  // Check subprocess
   if (skillPerms.subprocess === true && budget.subprocess !== true) {
     violations.push({ skillName, type: 'subprocess', requested: 'true' });
   }
 
-  // Check network outbound
-  if (skillPerms.network?.outbound && skillPerms.network.outbound.length > 0) {
+  if (skillPerms.network?.outbound) {
     const budgetDomains = budget.network?.outbound ?? [];
     for (const domain of skillPerms.network.outbound) {
       if (!isDomainAllowed(domain, budgetDomains)) {
@@ -123,8 +116,7 @@ export function collectPermissionViolations(
     }
   }
 
-  // Check filesystem read
-  if (skillPerms.filesystem?.read && skillPerms.filesystem.read.length > 0) {
+  if (skillPerms.filesystem?.read) {
     const budgetPaths = budget.filesystem?.read ?? [];
     for (const p of skillPerms.filesystem.read) {
       if (!isPathAllowed(p, budgetPaths)) {
@@ -133,8 +125,7 @@ export function collectPermissionViolations(
     }
   }
 
-  // Check filesystem write
-  if (skillPerms.filesystem?.write && skillPerms.filesystem.write.length > 0) {
+  if (skillPerms.filesystem?.write) {
     const budgetPaths = budget.filesystem?.write ?? [];
     for (const p of skillPerms.filesystem.write) {
       if (!isPathAllowed(p, budgetPaths)) {

@@ -150,7 +150,7 @@ function runTankWithStdin(
 export function expectSuccess(result: CliResult, pattern?: string | RegExp): void {
   if (result.exitCode !== 0) {
     throw new Error(
-      `Expected exit code 0, got ${result.exitCode}.\n` + `stdout: ${result.stdout}\nstderr: ${result.stderr}`
+      `Expected exit code 0, got ${result.exitCode}.\nstdout: ${result.stdout}\nstderr: ${result.stderr}`
     );
   }
   if (pattern) {

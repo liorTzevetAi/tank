@@ -124,26 +124,29 @@ async function cleanupUserFixture(ctx: E2EContext, user: UserFixture): Promise<v
     await ctx.sql`DELETE FROM "session" WHERE user_id = ${user.id}`;
     await ctx.sql`DELETE FROM "user" WHERE id = ${user.id}`;
   } catch (err) {
-    console.warn(`BDD user cleanup warning (non-fatal): ${err}`);
+    void err;
   }
 
   cleanupHomeDir(user.home);
 }
 
-export const test = base.extend<{
-  e2eContext: E2EContext;
-  secondUser: UserFixture;
-  thirdUser: UserFixture;
-  noAuthHome: string;
-  publishedPrivateSkill: SkillFixture;
-  publishedPublicSkill: SkillFixture;
-  bddState: BddState;
-  searchQuery: string;
-}>({
+export const test = base.extend<
+  {
+    noAuthHome: string;
+    bddState: BddState;
+  },
+  {
+    e2eContext: E2EContext;
+    secondUser: UserFixture;
+    thirdUser: UserFixture;
+    publishedPrivateSkill: SkillFixture;
+    publishedPublicSkill: SkillFixture;
+    searchQuery: string;
+  }
+>({
   e2eContext: [
     // Playwright requires destructuring pattern for fixture args
-    async ({}, use) => {
-      // biome-ignore lint: playwright fixture convention
+    async (_deps, use) => {
       const ctx = await setupE2E();
       await use(ctx);
       await cleanupE2E(ctx);
@@ -243,7 +246,7 @@ export const test = base.extend<{
 });
 
 export const { Given, When, Then } = createBdd(test);
-export { runTank, expectSuccess };
 export { expectFailure } from '../../helpers/cli';
 export { type ConsumerFixture, createConsumerFixture, createSkillFixture } from '../../helpers/fixtures';
 export type { SkillFixture };
+export { expectSuccess, runTank };

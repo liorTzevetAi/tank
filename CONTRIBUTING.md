@@ -4,12 +4,13 @@ Thank you for your interest in contributing to Tank! Every contribution matters 
 
 ## Project Status
 
-Tank is **MVP code-complete** with 461 tests passing. Right now, the most valuable contributions are:
+Tank is in active product and platform iteration. Right now, the most valuable contributions are:
 
 1. **Testing the CLI and web app** in real workflows
 2. **Opening issues** for bugs, edge cases, or missing features
 3. **Improving documentation** — clarity, examples, diagrams
 4. **Contributing security analysis rules** for the audit system
+5. **Improving the TanStack migration** without assuming parity with the maintained Next app
 
 ## Getting Started
 
@@ -41,28 +42,28 @@ Tank is **MVP code-complete** with 461 tests passing. Right now, the most valuab
 3. **Set up environment variables**
 
    ```bash
-   cp .env.example .env.local
+   cp .env.example .env
    ```
 
    Fill in the values — see `.env.example` for what's needed.
 
-4. **Push database schema** (requires DATABASE_URL in .env.local)
+4. **Push database schema** (requires DATABASE_URL in .env)
 
    ```bash
-   bun --filter @internal/web exec drizzle-kit push
+   bun --filter registry-legacy exec drizzle-kit push
    ```
 
 5. **Start the dev server**
 
    ```bash
-   just dev-web
+   just dev registry-legacy
    ```
 
 6. **Run tests**
 
    ```bash
    just test              # All unit tests
-   just test-python       # Python tests
+   just test scanner      # Python scanner tests
    ```
 
 7. **Discover all commands** — run `just --list` for the full command surface
@@ -71,13 +72,18 @@ Tank is **MVP code-complete** with 461 tests passing. Right now, the most valuab
 
 This is a monorepo managed by [Turborepo](https://turbo.build/repo) with Bun workspaces:
 
-- `packages/web` — Next.js 15 web app + API routes (deployed to Vercel)
+- `apps/registry` — active TanStack Start registry app and migration target
+- `apps/registry-legacy` — Next.js 15 web app + API routes (deployed to Vercel)
 - `packages/cli` — `tank` CLI tool (TypeScript, commander.js)
-- `packages/scanner` — Python security scanner (FastAPI, 6-stage pipeline)
-- `packages/shared` — Shared Zod schemas, TypeScript types, constants
+- `apps/python-api` — Python security scanner (FastAPI, 6-stage pipeline)
+- `packages/internals-schemas` — Shared Zod schemas, TypeScript types, contract constants
+- `packages/internals-helpers` — Shared pure helpers
 - `packages/mcp-server` — MCP server for editor integration
+- `idd/` — intent-first design artifacts and active initiatives
+- `bdd/` — executable behavior specs
+- `e2e/` — full-stack regression tests
 - `infra/` — Docker Compose, Helm charts, Grafana/Loki configs
-- `docs/` — Product brief, architecture
+- `docs/` — architecture, process, product, and ops reference
 
 ## How to Contribute
 
@@ -106,7 +112,7 @@ Open a [Feature Request](https://github.com/tankpkg/tank/issues/new?template=fea
 
 - Keep PRs focused — one logical change per PR
 - Update documentation if your change affects user-facing behavior
-- Add tests for new functionality (once test infrastructure exists)
+- Add or update tests in the right layer: unit, `bdd/`, or `e2e/`
 - Ensure all checks pass before requesting review
 
 ## Commit Messages
@@ -130,7 +136,7 @@ refactor: extract version resolution logic
 - **TDD** — write failing tests first, then implement (RED → GREEN → REFACTOR)
 - **vitest** for TypeScript tests, **pytest** for Python tests
 - **Drizzle ORM** for database access (not raw SQL, not Prisma)
-- **Server Components** by default in Next.js — `"use client"` only when needed
+- **React server/client boundaries** should match the target app architecture you are editing
 - **Zod** for all runtime validation (API inputs, config files, schemas)
 - Match existing patterns — look at similar files before writing new ones
 

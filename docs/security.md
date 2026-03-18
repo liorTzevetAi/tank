@@ -20,22 +20,8 @@ Current permission types:
 Enforcement layers in the current repo:
 
 1. publish-time manifest validation
-2. install-time permission budget check with interactive expansion prompt (see below)
+2. install/update permission budget enforcement in the CLI
 3. scanner cross-check between declared permissions and observed behavior
-
-### Install-Time Permission Budget
-
-When `tank install` detects skills requesting permissions beyond the project's `tank.json` budget:
-
-1. all violations are collected across all resolved skills (not fail-fast)
-2. user is shown a summary of requested expansions grouped by type
-3. user confirms or declines the budget expansion
-4. on accept: `tank.json` permissions are merged and written to disk
-5. on decline: install aborts with violation details
-
-`--yes` / `-y` flag auto-accepts expansions for CI and non-interactive environments.
-
-Implementation: `packages/cli/src/lib/permission-prompt.ts` (`promptForPermissionExpansion`, `mergePermissionsIntoBudget`), `packages/cli/src/lib/permission-checker.ts` (`collectPermissionViolations`).
 
 Planned, not implemented here:
 
@@ -43,7 +29,7 @@ Planned, not implemented here:
 
 ## Permission Escalation
 
-Publish-time escalation checks live in `packages/web/lib/permission-escalation.ts`.
+Publish-time escalation checks live in `apps/registry-legacy/lib/permission-escalation.ts` (and `packages/internals-helpers/src/permission-escalation.ts`).
 
 - PATCH bump: reject any new permissions
 - MINOR bump: reject dangerous additions (`network.outbound`, `subprocess`)

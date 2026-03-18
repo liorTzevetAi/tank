@@ -1,0 +1,642 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/jetbrains-mono";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Tank brand — dual-green system */
+  --color-tank: var(--tank-green-ui);
+  --color-tank-bright: var(--tank-green);
+  --color-tank-emerald: var(--tank-green-ui);
+  --color-tank-emerald-bright: var(--tank-green);
+  --color-brand: var(--tank-green-ui);
+
+  /* Radius — sharp angular feel (2px base) */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Fonts — Space Grotesk (display/headings), Inter (body), JetBrains Mono (code) */
+  --font-sans: "Inter Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "SF Mono", "Fira Code", monospace;
+  --font-display: "Space Grotesk Variable", system-ui, sans-serif;
+}
+
+/* ============================================================
+   LIGHT MODE — green-tinted neutrals
+   ============================================================ */
+:root {
+  --radius: 0.375rem;
+
+  --background: oklch(0.985 0.002 155);
+  --foreground: oklch(0.145 0.005 155);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0.005 155);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0.005 155);
+  --primary: oklch(0.145 0.005 155);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.965 0.002 155);
+  --secondary-foreground: oklch(0.145 0.005 155);
+  --muted: oklch(0.965 0.002 155);
+  --muted-foreground: oklch(0.55 0.01 155);
+  --accent: oklch(0.965 0.002 155);
+  --accent-foreground: oklch(0.145 0.005 155);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0.004 155);
+  --input: oklch(0.922 0.004 155);
+  --ring: oklch(0.7 0.01 155);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0.002 155);
+  --sidebar-foreground: oklch(0.145 0.005 155);
+  --sidebar-primary: oklch(0.145 0.005 155);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.965 0.002 155);
+  --sidebar-accent-foreground: oklch(0.145 0.005 155);
+  --sidebar-border: oklch(0.922 0.004 155);
+  --sidebar-ring: oklch(0.7 0.01 155);
+
+  --tank-green: #00ff41;
+  --tank-green-ui: #10b981;
+  --tank-emerald: #10b981;
+  --tank-emerald-bright: #34d399;
+
+  --glow-sm: none;
+  --glow-md: none;
+  --glow-lg: none;
+  --glow-text: none;
+}
+
+/* ============================================================
+   DARK MODE — void black base with green-tinted neutrals
+   ============================================================ */
+.dark {
+  --background: oklch(0.05 0.005 155);
+  --foreground: oklch(0.93 0.008 155);
+  --card: oklch(0.08 0.008 155);
+  --card-foreground: oklch(0.93 0.008 155);
+  --popover: oklch(0.08 0.008 155);
+  --popover-foreground: oklch(0.93 0.008 155);
+  --primary: oklch(0.93 0.008 155);
+  --primary-foreground: oklch(0.05 0.005 155);
+  --secondary: oklch(0.14 0.008 155);
+  --secondary-foreground: oklch(0.93 0.008 155);
+  --muted: oklch(0.14 0.008 155);
+  --muted-foreground: oklch(0.55 0.012 155);
+  --accent: oklch(0.14 0.008 155);
+  --accent-foreground: oklch(0.93 0.008 155);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(0.16 0.012 155);
+  --input: oklch(0.16 0.012 155);
+  --ring: oklch(0.55 0.012 155);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.08 0.008 155);
+  --sidebar-foreground: oklch(0.93 0.008 155);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.93 0.008 155);
+  --sidebar-accent: oklch(0.14 0.008 155);
+  --sidebar-accent-foreground: oklch(0.93 0.008 155);
+  --sidebar-border: oklch(0.16 0.012 155);
+  --sidebar-ring: oklch(0.55 0.012 155);
+
+  --tank-green: #00ff41;
+  --tank-green-ui: #10b981;
+  --tank-emerald: #10b981;
+  --tank-emerald-bright: #34d399;
+
+  --glow-sm: 0 0 10px rgba(0, 255, 65, 0.3);
+  --glow-md: 0 0 20px rgba(0, 255, 65, 0.3);
+  --glow-lg: 0 0 40px rgba(0, 255, 65, 0.2);
+  --glow-text: 0 0 7px rgba(0, 255, 65, 0.6), 0 0 20px rgba(0, 255, 65, 0.3);
+}
+
+/* ============================================================
+   MATRIX GRID BACKGROUND — fixed, green-tinted lines
+   ============================================================ */
+.matrix-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 255, 65, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 65, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+:root:not(.dark) .matrix-grid {
+  background-image:
+    linear-gradient(rgba(0, 255, 65, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 65, 0.02) 1px, transparent 1px);
+}
+
+.matrix-grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, transparent 0%, var(--background) 65%),
+    radial-gradient(ellipse at 80% 40%, rgba(0, 255, 65, 0.02) 0%, transparent 40%);
+}
+
+/* ============================================================
+   MATRIX RAIN — vertical scrolling security text (pure CSS)
+   ============================================================ */
+@keyframes matrix-rain {
+  0% {
+    transform: translateY(-100vh);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+.matrix-rain {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+:root:not(.dark) .matrix-rain {
+  display: none;
+}
+
+.matrix-rain-col {
+  position: absolute;
+  top: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(0, 255, 65, 0.05);
+  writing-mode: vertical-lr;
+  animation: matrix-rain linear infinite;
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* ============================================================
+   TERMINAL — for tank.json and code blocks
+   ============================================================ */
+.tank-terminal {
+  background: oklch(0.06 0.008 155);
+  border: 1px solid rgba(0, 255, 65, 0.06);
+  position: relative;
+  box-shadow: 0 0 60px rgba(0, 255, 65, 0.03);
+}
+
+.tank-terminal::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(0, 255, 65, 0.1) 0%, transparent 40%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ============================================================
+   SCANLINES — subtle CRT overlay for terminal blocks
+   ============================================================ */
+.tank-scanlines {
+  position: relative;
+}
+
+.tank-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 65, 0.012) 2px,
+    rgba(0, 255, 65, 0.012) 4px
+  );
+  z-index: 1;
+  border-radius: inherit;
+}
+
+/* ============================================================
+   VERIFIED DOT — pulse animation for terminal header
+   ============================================================ */
+@keyframes verified-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes hero-crt-scanline-scroll {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+.hero-crt-scanlines {
+  animation: hero-crt-scanline-scroll 8s linear infinite;
+}
+
+.verified-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tank-green);
+  animation: verified-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================================
+   STEP CARD — hover glow line (top border reveal)
+   ============================================================ */
+.step-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.step-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--tank-green-ui), transparent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.step-card:hover::before {
+  opacity: 1;
+}
+.step-card:hover {
+  border-color: rgba(0, 255, 65, 0.15);
+}
+
+/* ============================================================
+   SCROLLBAR — green-tinted
+   ============================================================ */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: oklch(0.05 0.005 155);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 65, 0.12);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 65, 0.2);
+}
+
+/* ============================================================
+   SECTION DIVIDER
+   ============================================================ */
+.tank-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 255, 65, 0.15) 20%,
+    rgba(0, 255, 65, 0.25) 50%,
+    rgba(0, 255, 65, 0.15) 80%,
+    transparent 100%
+  );
+}
+
+/* ============================================================
+   UTILITY CLASSES — glow, display font
+   ============================================================ */
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .glow-text {
+    text-shadow: var(--glow-text);
+  }
+  .glow-sm {
+    box-shadow: var(--glow-sm);
+  }
+  .glow-md {
+    box-shadow: var(--glow-md);
+  }
+  .glow-lg {
+    box-shadow: var(--glow-lg);
+  }
+}
+
+/* ============================================================
+   BASE LAYER
+   ============================================================ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ============================================================
+   PROSE — docs and skill readmes
+   ============================================================ */
+.prose {
+  line-height: 1.75;
+  max-width: 65ch;
+
+  & h1 {
+    font-size: 2.25em;
+    font-weight: 800;
+    margin-top: 0;
+    margin-bottom: 0.9em;
+    line-height: 1.1;
+  }
+  & h2 {
+    font-size: 1.5em;
+    font-weight: 700;
+    margin-top: 2em;
+    margin-bottom: 1em;
+    line-height: 1.3;
+  }
+  & h3 {
+    font-size: 1.25em;
+    font-weight: 600;
+    margin-top: 1.6em;
+    margin-bottom: 0.6em;
+    line-height: 1.6;
+  }
+  & h4 {
+    font-weight: 600;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+  }
+  & p {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+  }
+  & a {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  & strong {
+    font-weight: 600;
+  }
+  & ul {
+    list-style-type: disc;
+    padding-left: 1.625em;
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+  }
+  & ol {
+    list-style-type: decimal;
+    padding-left: 1.625em;
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+  }
+  & li {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  & blockquote {
+    font-style: italic;
+    border-left: 3px solid var(--border);
+    padding-left: 1em;
+    margin-top: 1.6em;
+    margin-bottom: 1.6em;
+  }
+
+  & pre {
+    overflow-x: auto;
+    border-radius: 0.25rem;
+    padding: 0.875em 1.25em;
+    font-size: 0.875em;
+    line-height: 1.7;
+    margin-top: 1.7em;
+    margin-bottom: 1.7em;
+    background: oklch(0.968 0.007 155);
+    color: oklch(0.208 0.042 155);
+  }
+
+  & :not(pre) > code {
+    background: oklch(0.95 0.01 155);
+    padding: 0.2em 0.4em;
+    border-radius: 0.25rem;
+    color: oklch(0.4 0.12 155);
+    font-size: 0.85em;
+    border: 1px solid oklch(0.9 0.02 155);
+  }
+
+  & code {
+    font-size: 0.875em;
+    font-weight: 500;
+  }
+
+  & pre code {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  & pre code span {
+    background: transparent;
+  }
+
+  & table {
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    font-size: 0.875em;
+    line-height: 1.7;
+  }
+  & thead {
+    border-bottom: 2px solid var(--border);
+  }
+  & thead th {
+    font-weight: 600;
+    padding: 0 0 0.6em;
+    vertical-align: bottom;
+  }
+  & tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.15s ease;
+  }
+  & tbody tr:hover {
+    background: oklch(0.97 0.005 155);
+  }
+  & tbody td {
+    padding: 0.6em 0;
+    vertical-align: top;
+  }
+  & th:not(:first-child),
+  & td:not(:first-child) {
+    padding-left: 1em;
+  }
+
+  & hr {
+    border-color: var(--border);
+    margin-top: 3em;
+    margin-bottom: 3em;
+  }
+  & img {
+    margin-top: 2em;
+    margin-bottom: 2em;
+    border-radius: 0.25rem;
+  }
+  & figure {
+    margin-top: 2em;
+    margin-bottom: 2em;
+  }
+  & figcaption {
+    font-size: 0.875em;
+    line-height: 1.4;
+    margin-top: 0.875em;
+  }
+}
+
+.prose.max-w-none {
+  max-width: none;
+}
+
+/* ============================================================
+   SHIKI — dual theme support
+   ============================================================ */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
+
+/* ============================================================
+   HEADING ANCHOR LINKS
+   ============================================================ */
+.anchor-heading {
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+
+.anchor-heading:hover::before {
+  content: "#";
+  position: absolute;
+  margin-left: -1.5em;
+  font-weight: 400;
+  color: var(--tank-green-ui);
+  opacity: 0.7;
+}
+
+/* ============================================================
+   DARK PROSE INVERT
+   ============================================================ */
+.dark .prose.prose-invert {
+  & a {
+    color: oklch(0.929 0.013 155);
+  }
+  & tbody tr:hover {
+    background: oklch(0.22 0.03 155);
+  }
+  & pre {
+    background: oklch(0.08 0.008 155);
+    color: oklch(0.93 0.008 155);
+  }
+  & :not(pre) > code {
+    background: oklch(0.14 0.008 155);
+    color: oklch(0.85 0.05 155);
+    padding: 0.15em 0.35em;
+    border-radius: 0.125rem;
+  }
+  & pre code,
+  & pre code span {
+    background: transparent;
+  }
+  & thead {
+    border-color: oklch(1 0 0 / 15%);
+  }
+  & tbody tr {
+    border-color: oklch(1 0 0 / 8%);
+  }
+  & blockquote {
+    border-color: oklch(1 0 0 / 20%);
+    color: oklch(0.7 0.04 155);
+  }
+  & hr {
+    border-color: oklch(1 0 0 / 10%);
+  }
+}

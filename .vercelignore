@@ -4,9 +4,9 @@
 e2e
 infra
 .worktrees
-/docs
-.idd
-.bdd
+docs
+idd
+bdd
 .claude
 scripts
 Formula

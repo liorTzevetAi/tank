@@ -1,11 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
+
 import {
   buildSkillKey,
   type RegistryFetcher,
   type RegistrySkillMeta,
   type RegistryVersionInfo,
   resolveDependencyTree
-} from '../lib/dependency-resolver.js';
+} from '~/lib/dependency-resolver.js';
+
+// Validates: idd/modules/install/INTENT.md C3-C5
 
 function makeVersionInfo(version: string): RegistryVersionInfo {
   return {

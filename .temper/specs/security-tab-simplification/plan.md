@@ -11,17 +11,17 @@
 
 ## Blast Radius
 
-| Area | Impact | Risk |
-|------|--------|------|
-| `skills/page.tsx` | Medium - Replace ScoreBadge | Low |
-| `SecurityOverview.tsx` | High - Remove score display | Low |
-| Security tab in `[...name]/page.tsx` | Medium - Use QualityChecks | Low |
+| Area                                 | Impact                      | Risk |
+| ------------------------------------ | --------------------------- | ---- |
+| `skills/page.tsx`                    | Medium - Replace ScoreBadge | Low  |
+| `SecurityOverview.tsx`               | High - Remove score display | Low  |
+| Security tab in `[...name]/page.tsx` | Medium - Use QualityChecks  | Low  |
 
 ## Tasks
 
 ### Phase 1: Fix Skill List Badge
 
-- [ ] **T1**: Update `packages/web/app/(registry)/skills/page.tsx`
+- [ ] **T1**: Update `apps/registry-legacy/app/(registry)/skills/page.tsx`
   - Import `TrustBadge` from `@/components/security`
   - Import `computeTrustLevel` from `@/lib/trust-level`
   - Replace `<ScoreBadge score={skill.auditScore} />` with `<TrustBadge trustLevel={...} findings={...} size="sm" />`
@@ -29,7 +29,7 @@
 
 ### Phase 2: Simplify Security Overview
 
-- [ ] **T2**: Update `packages/web/components/security/SecurityOverview.tsx`
+- [ ] **T2**: Update `apps/registry-legacy/components/security/SecurityOverview.tsx`
   - Remove score display (`text-5xl` number)
   - Remove progress bar
   - Add `TrustBadge` component prominently at top
@@ -37,7 +37,7 @@
 
 ### Phase 3: Use QualityChecks in Security Tab
 
-- [ ] **T3**: Update `packages/web/app/(registry)/skills/[...name]/page.tsx`
+- [ ] **T3**: Update `apps/registry-legacy/app/(registry)/skills/[...name]/page.tsx`
   - Import `QualityChecks`, `computeQualityChecks` from `@/components/security`
   - Replace `ScoreBreakdown` with `QualityChecks`
   - Build checks data from existing skill data
@@ -51,16 +51,17 @@
 
 ## Existing Components to Use
 
-| Component | Location | Usage |
-|-----------|----------|-------|
-| `TrustBadge` | `components/security/TrustBadge.tsx` | Already exists, use in list |
-| `QualityChecks` | `components/security/QualityChecks.tsx` | Already exists, use in security tab |
-| `computeTrustLevel` | `lib/trust-level.ts` | Already exists |
-| `computeQualityChecks` | `components/security/QualityChecks.tsx` | Already exists |
+| Component              | Location                                | Usage                               |
+| ---------------------- | --------------------------------------- | ----------------------------------- |
+| `TrustBadge`           | `components/security/TrustBadge.tsx`    | Already exists, use in list         |
+| `QualityChecks`        | `components/security/QualityChecks.tsx` | Already exists, use in security tab |
+| `computeTrustLevel`    | `lib/trust-level.ts`                    | Already exists                      |
+| `computeQualityChecks` | `components/security/QualityChecks.tsx` | Already exists                      |
 
 ## Code Changes Summary
 
 ### T1: skills/page.tsx
+
 ```diff
 - import { Badge } from '@/components/ui/badge';
 + import { TrustBadge } from '@/components/security';
@@ -88,6 +89,7 @@
 ```
 
 ### T3: Security Tab
+
 ```diff
 - import { ScoreBreakdown } from '@/components/security';
 + import { QualityChecks, computeQualityChecks } from '@/components/security';

@@ -9,11 +9,38 @@
  * 4. Write CLI config to isolated temp HOME directory
  * 5. Clean up all test data after suite completes
  */
-import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+
+import { generateUuid, hash } from 'cipher-kit/node';
+
 import postgres from 'postgres';
+
+import { getCurrentAppTarget } from '../targets.js';
+
+function loadDatabaseUrlFromEnvFile(): string | undefined {
+  const envPath = path.resolve(process.cwd(), '.env');
+  if (!fs.existsSync(envPath)) {
+    return process.env.DATABASE_URL;
+  }
+
+  for (const line of fs.readFileSync(envPath, 'utf-8').split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const separator = trimmed.indexOf('=');
+    if (separator <= 0) continue;
+    if (trimmed.slice(0, separator).trim() !== 'DATABASE_URL') continue;
+    const value = trimmed
+      .slice(separator + 1)
+      .trim()
+      .replace(/^["']|["']$/g, '');
+    process.env.DATABASE_URL = value;
+    return value;
+  }
+
+  return process.env.DATABASE_URL;
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -36,50 +63,36 @@ export interface E2EContext {
   sql: postgres.Sql;
 }
 
-// ---------------------------------------------------------------------------
-// API Key Hashing (matches better-auth's defaultKeyHasher)
-// ---------------------------------------------------------------------------
-
-/**
- * Hash an API key exactly as better-auth does:
- * SHA-256 → base64url (no padding)
- */
 function hashApiKey(plainKey: string): string {
-  const hash = createHash('sha256').update(plainKey).digest();
-  // Node.js Buffer.toString('base64url') produces base64url WITHOUT padding
-  return hash.toString('base64url');
+  return hash(plainKey);
+}
+
+function createApiKey(seed: string): string {
+  let key = `tank_e2e_${seed}_${generateUuid().replace(/-/g, '')}`;
+  while (key.length < 64) {
+    key += generateUuid().replace(/-/g, '');
+  }
+  return key;
 }
 
 // ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
 
-/**
- * Create all database records and config files needed for E2E tests.
- * Returns an E2EContext that test files use for CLI spawning.
- *
- * Note: Uses crypto.randomUUID() for generating test IDs and API keys.
- * This is cryptographically secure (not Math.random()).
- */
-export async function setupE2E(
-  registry = process.env.E2E_REGISTRY_URL || 'http://localhost:3000'
-): Promise<E2EContext> {
-  const connectionString = process.env.DATABASE_URL;
+export async function setupE2E(registry = getCurrentAppTarget().registryUrl): Promise<E2EContext> {
+  const connectionString = process.env.DATABASE_URL || loadDatabaseUrlFromEnvFile();
   if (!connectionString) {
-    throw new Error('DATABASE_URL is required for E2E tests. Set it in .env.local');
+    throw new Error('DATABASE_URL is required for E2E tests. Set it in .env');
   }
 
   const sql = postgres(connectionString);
-  // randomUUID() is cryptographically secure (uses crypto.randomUUID from Node.js)
-  // lgtm[js/insecure-randomness]
-  const runId = randomUUID().replace(/-/g, '').slice(0, 10);
+  const runId = generateUuid().replace(/-/g, '').slice(0, 10);
   const userId = `e2e-user-${runId}`;
-  // lgtm[js/insecure-randomness]
   const orgSlug = `e2etest-${runId}`;
   const orgId = `e2e-org-${runId}`;
   const memberId = `e2e-member-${runId}`;
   const apiKeyId = `e2e-apikey-${runId}`;
-  const plainKey = `tank_e2e_${runId}_${randomUUID().replace(/-/g, '')}`;
+  const plainKey = createApiKey(runId);
   const hashedKey = hashApiKey(plainKey);
   const now = new Date();
 
@@ -147,7 +160,11 @@ export async function setupE2E(
  * Remove all test data from the database and temp files.
  * Deletes in reverse dependency order.
  */
-export async function cleanupE2E(ctx: E2EContext): Promise<void> {
+export async function cleanupE2E(ctx?: E2EContext | null): Promise<void> {
+  if (!ctx) {
+    return;
+  }
+
   const { sql, runId, home } = ctx;
   const userId = `e2e-user-${runId}`;
   const orgId = `e2e-org-${runId}`;
@@ -181,9 +198,7 @@ export async function cleanupE2E(ctx: E2EContext): Promise<void> {
     await sql`DELETE FROM "apikey" WHERE id LIKE ${`e2e-apikey-${runId}%`}`;
     await sql`DELETE FROM "session" WHERE user_id = ${userId}`;
     await sql`DELETE FROM "user" WHERE id = ${userId}`;
-  } catch (err) {
-    console.warn(`E2E cleanup warning (non-fatal): ${err}`);
-  }
+  } catch (_err) {}
 
   // Clean up temp HOME directory
   try {

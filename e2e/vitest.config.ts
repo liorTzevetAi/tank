@@ -1,8 +1,13 @@
 import path from 'node:path';
+
 import { defineConfig } from 'vitest/config';
 
+import { getCurrentAppTarget } from './targets.js';
+
+process.env.E2E_REGISTRY_URL ??= getCurrentAppTarget().registryUrl;
+
 export default defineConfig({
-  // Load .env.local from project root
+  // Load .env from project root
   envDir: path.resolve(__dirname, '..'),
 
   test: {
@@ -16,6 +21,6 @@ export default defineConfig({
     sequence: {
       concurrent: false
     },
-    include: ['e2e/**/*.e2e.test.ts']
+    include: ['**/*.e2e.test.ts']
   }
 });

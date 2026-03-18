@@ -10,10 +10,20 @@ node_modules/
 
 # Build
 dist/
+dist-ssr/
 build/
 out/
 .next/
+.astro/
 .turbo/
+.nitro/
+.tanstack/
+.wrangler/
+.output/
+.vinxi/
+.content-collections/
+__unconfig*
+todos.json
 *.tsbuildinfo
 
 # Environment
@@ -34,11 +44,10 @@ out/
 # Test
 coverage/
 test-results/
-e2e/bdd/web/.features-gen/
-e2e/bdd/web/reports/
 
 # Debug
 *.log
+*.local
 
 # OS
 Thumbs.db
@@ -47,6 +56,7 @@ Thumbs.db
 # Tool artifacts
 .playwright-mcp/
 .sisyphus/
+.superpowers/
 .plans/
 
 # Claude Code

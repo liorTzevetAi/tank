@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const API_DIR = join(ROOT, 'packages/web/app/api/v1');
-const DOCS_OUTPUT = join(ROOT, 'packages/web/content/docs/api.mdx');
+const API_DIR = join(ROOT, 'apps/registry-legacy/app/api/v1');
+const DOCS_OUTPUT = join(ROOT, 'apps/registry-legacy/content/docs/api.mdx');
 
 // HTTP methods to document
 const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
@@ -27,7 +27,7 @@ function parseRoute(filePath) {
   const routePath = relativePath.replace(/\[([^\]]+)\]/g, ':$1').replace(/\[\.\.\.([^\]]+)\]/g, ':$1*');
 
   // Extract method handlers
-  METHODS.forEach((method) => {
+  for (const method of METHODS) {
     const methodRegex = new RegExp(`export\\s+async\\s+function\\s+${method}\\s*\\(`, 'i');
     if (methodRegex.test(source)) {
       endpoints.push({
@@ -35,7 +35,7 @@ function parseRoute(filePath) {
         path: `/api/v1${routePath}`
       });
     }
-  });
+  }
 
   return endpoints;
 }
